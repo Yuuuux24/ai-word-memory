@@ -1,0 +1,7 @@
+角色：资深前端工程师
+任务：在frontend文件夹内创建Pages Router模式的Next.js项目，安装antd组件库，给出完整终端命令，不需要写页面代码，只提供初始化步骤。
+要求：
+1. 使用npx create-next-app创建，选择Pages Router、开启ESLint，不使用Tailwind
+2. 创建完成后安装ant design组件库命令
+3. 给出前端启动命令 npm run dev
+4. 输出纯命令，简洁清晰

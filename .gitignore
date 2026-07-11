@@ -1,0 +1,39 @@
+# ========================
+# 前端：Next.js
+# ========================
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ========================
+# Python 后端：Flask
+# ========================
+venv/
+myenv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+*.log
+
+# ========================
+# 通用：IDE & 系统
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp

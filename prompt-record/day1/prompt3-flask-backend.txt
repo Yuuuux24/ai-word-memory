@@ -1,0 +1,16 @@
+角色：Python Flask后端工程师
+需求：搭建分层式Flask后端基础骨架，仅搭建结构，不实现业务逻辑
+技术栈：Flask、flask-cors、supabase、python-dotenv
+目录结构要求：
+backend/
+  app.py 项目入口
+  config.py 配置文件（跨域、Supabase连接预留）
+  routes/ 路由文件夹
+    word.py 单词相关空接口
+    ai_api.py AI交互空接口
+    record.py 学习记录空接口
+硬性要求：
+1. 全局开启CORS跨域，适配前端3000端口
+2. 三个路由文件各自预留空接口路由
+3. 提供虚拟环境创建、依赖安装、项目启动命令
+4. 代码简洁，仅初始化结构，无数据库增删改查逻辑

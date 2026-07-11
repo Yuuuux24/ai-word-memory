@@ -1,0 +1,10 @@
+角色：Next.js 前端开发，熟练使用Ant Design
+技术：Next.js Pages路由、Ant Design Layout导航组件
+需求：
+1. 封装公共Layout组件，顶部导航栏三个菜单：单词首页、AI智能测试、学习记录，点击可跳转对应路由
+2. 创建3个空白页面，仅基础布局，无业务逻辑：
+pages/index.js 单词记忆首页
+pages/ai-test.js AI测试页面
+pages/record.js 学习记录页
+3. 所有页面自动引入公共Layout，页面只写空白容器，不写单词查询、AI交互逻辑
+4. 代码注释清晰，目录规范，直接输出完整可复制代码

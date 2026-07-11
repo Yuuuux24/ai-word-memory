@@ -1,0 +1,6 @@
+生成 Next.js前端 + Flask Python后端 联合项目的.gitignore文件内容
+需要忽略：
+1. 前端：node_modules、.next、npm日志、环境变量文件
+2. Python后端：venv虚拟环境、pyc缓存、env配置、日志文件
+3. 通用：IDE配置、系统缓存、README临时文件
+直接输出完整文本，无需多余解释
