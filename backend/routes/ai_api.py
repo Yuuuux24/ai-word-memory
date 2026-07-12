@@ -38,7 +38,7 @@ def generate_memo(word, meaning, part_of_speech, example_sentence):
     mnemonic_templates = [
         f"「{word}」记忆口诀：把单词拆成{word[:3]}... + {word[3:]}...，联想一个有趣的画面帮你记住它。",
         f"记「{word}」很简单：想象一下{meaning}的场景，这个单词就刻在脑海里啦！",
-        f"「{word}」={meaning}，可以记成"遇到{word}就{meaning}",朗朗上口！",
+        f'「{word}」={meaning}，可以记成「遇到{word}就{meaning}」，朗朗上口！',
     ]
 
     # 日常例句扩展
