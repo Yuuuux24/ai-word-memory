@@ -1,4 +1,5 @@
 flask
 flask-cors
-supabase
+supabase>=2.15
 python-dotenv
+websockets
