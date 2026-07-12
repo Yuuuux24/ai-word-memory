@@ -15,9 +15,9 @@ class Config:
     # 跨域配置：允许前端 localhost:3000 访问
     CORS_ORIGINS = ['http://localhost:3000']
 
-    # Supabase 配置（后续接入数据库时使用）
+    # Supabase 配置
     SUPABASE_URL = os.getenv('SUPABASE_URL', '')
-    SUPABASE_KEY = os.getenv('SUPABASE_KEY', '')
+    SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY', '')
 
     # Flask 配置
     DEBUG = os.getenv('FLASK_DEBUG', '1') == '1'
