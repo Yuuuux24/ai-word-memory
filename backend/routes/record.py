@@ -64,7 +64,7 @@ def add_study_record():
 
 @record_bp.route('/list', methods=['GET'])
 def get_study_list():
-    """分页查询用户学习记录，关联单词信息"""
+    """分页查询用户学习记录，关联单词信息，支持日期筛选"""
     try:
         user_id = request.args.get('user_id', type=int)
         if not user_id:
@@ -72,24 +72,37 @@ def get_study_list():
 
         page = request.args.get('page', 1, type=int)
         size = request.args.get('size', 10, type=int)
-        if page < 1: page = 1
-        if size < 1: size = 10
-        if size > 50: size = 50
+        filter_date = request.args.get('date', '').strip()
+
+        if page < 1:
+            page = 1
+        if size < 1:
+            size = 10
+        if size > 50:
+            size = 50
 
         supabase = get_supabase()
 
-        cr = supabase.table('study_record').select('id', count='exact').eq('user_id', user_id).execute()
-        total = cr.count if cr.count else 0
+        # 构建查询
+        query = supabase.table('study_record').select('*, words!inner(id,word,phonetic,basic_meaning)')
 
+        # 日期筛选：匹配 study_date 字段（日期部分的字符串比较）
+        if filter_date:
+            query = query.gte('study_date', filter_date + 'T00:00:00').lt('study_date', filter_date + 'T23:59:59')
+
+        query = query.eq('user_id', user_id)
+
+        # 先查总数
+        count_result = query.execute()
+        total = count_result.count if count_result.count else 0
+
+        # 分页
         offset = (page - 1) * size
         if offset >= total and total > 0:
             offset = max(0, total - size)
             page = (offset // size) + 1
 
-        result = supabase.table('study_record') \
-            .select('*, words!inner(id,word,phonetic,basic_meaning)') \
-            .eq('user_id', user_id) \
-            .order('study_date', desc=True) \
+        result = query.order('study_date', desc=True) \
             .range(offset, offset + size - 1) \
             .execute()
 

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Card, Input, Button, Typography, message, Space } from 'antd';
+import { Card, Input, Button, Typography, message, Space, Alert } from 'antd';
 import { UserOutlined, LoginOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { useRouter } from 'next/router';
+import { showError } from '@/utils/errorHandler';
 
 const { Title, Text } = Typography;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
@@ -11,6 +12,7 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [validationMsg, setValidationMsg] = useState('');
 
   // 检查是否已登录
   useEffect(() => {
@@ -22,10 +24,28 @@ export default function Login() {
     }
   }, []);
 
+  // 实时校验用户名长度
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+    setUsername(value);
+    const trimmed = value.trim();
+    if (trimmed && trimmed.length < 2) {
+      setValidationMsg('用户名至少需要 2 个字符');
+    } else if (trimmed.length > 50) {
+      setValidationMsg('用户名不能超过 50 个字符');
+    } else {
+      setValidationMsg('');
+    }
+  };
+
   const handleLogin = async () => {
     const trimmed = username.trim();
     if (!trimmed) {
       message.warning('请输入用户名');
+      return;
+    }
+    if (trimmed.length < 2) {
+      message.warning('用户名至少需要 2 个字符');
       return;
     }
 
@@ -45,11 +65,10 @@ export default function Login() {
         setLoggedIn(true);
         setTimeout(() => router.push('/'), 800);
       } else {
-        message.error(json.msg || '登录失败');
+        showError(json.msg || '登录失败');
       }
     } catch (err) {
-      message.error('无法连接后端服务，请确认 Flask 已启动');
-      console.error('login error:', err);
+      showError(err, '无法连接后端服务');
     } finally {
       setLoading(false);
     }
@@ -80,12 +99,7 @@ export default function Login() {
         <Text type="secondary">输入用户名即可登录或自动注册，无需密码</Text>
       </div>
 
-      <Card
-        style={{
-          borderRadius: 14,
-          border: '1px solid #f0f0f0',
-        }}
-      >
+      <Card style={{ borderRadius: 14, border: '1px solid #f0f0f0' }}>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>
             <Text strong style={{ display: 'block', marginBottom: 8, fontSize: 14 }}>
@@ -93,15 +107,21 @@ export default function Login() {
             </Text>
             <Input
               size="large"
-              placeholder="请输入用户名"
+              placeholder="请输入用户名（至少2个字符）"
               prefix={<UserOutlined style={{ color: '#b0b0b0' }} />}
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={handleUsernameChange}
               onPressEnter={handleLogin}
               maxLength={50}
               disabled={loggedIn}
               style={{ borderRadius: 10 }}
+              status={validationMsg ? 'error' : ''}
             />
+            {validationMsg && (
+              <Text type="danger" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
+                {validationMsg}
+              </Text>
+            )}
           </div>
 
           {loggedIn ? (
@@ -139,6 +159,7 @@ export default function Login() {
               icon={<LoginOutlined />}
               loading={loading}
               onClick={handleLogin}
+              disabled={!!validationMsg}
               style={{ borderRadius: 10, height: 44 }}
             >
               {loading ? '登录中...' : '登录 / 注册'}
@@ -147,15 +168,7 @@ export default function Login() {
         </Space>
       </Card>
 
-      <Text
-        type="secondary"
-        style={{
-          display: 'block',
-          textAlign: 'center',
-          marginTop: 24,
-          fontSize: 13,
-        }}
-      >
+      <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginTop: 24, fontSize: 13 }}>
         首次输入用户名将自动创建账户，学习记录仅属于你
       </Text>
     </div>
