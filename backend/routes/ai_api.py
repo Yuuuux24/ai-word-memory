@@ -92,12 +92,12 @@ def ai_memo():
 
         word = result.data[0]
 
-        # 生成 AI 记忆素材
+        # 生成 AI 记忆素材（使用实际表列名 basic_meaning）
         memo_data = generate_memo(
             word=word['word'],
-            meaning=word.get('meaning', ''),
-            part_of_speech=word.get('part_of_speech', ''),
-            example_sentence=word.get('example_sentence', ''),
+            meaning=word.get('basic_meaning', ''),
+            part_of_speech='',
+            example_sentence='',
         )
         memo_data['word_id'] = word_id
 

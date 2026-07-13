@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
-  Card, Tag, Typography, Empty, Skeleton, Row, Col,
-  Modal, Spin, message, Pagination
+  Card, Typography, Empty, Skeleton, Row, Col,
+  Modal, Spin, message, Pagination, Button, Space
 } from 'antd';
-import { SoundOutlined } from '@ant-design/icons';
+import { SoundOutlined, SaveOutlined } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
-
-const getPosColor = (pos) => {
-  const colorMap = { verb: 'blue', adj: 'green', noun: 'orange', adverb: 'purple', 'verb/noun': 'cyan' };
-  return colorMap[pos] || 'default';
-};
 
 export default function Home() {
   const [words, setWords] = useState([]);
@@ -26,6 +21,7 @@ export default function Home() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiData, setAiData] = useState(null);
   const [currentWord, setCurrentWord] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   // 页面加载自动拉取分页单词
   useEffect(() => {
@@ -82,6 +78,35 @@ export default function Home() {
     setSize(s);
   };
 
+  const saveStudyRecord = async () => {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      message.warning('请先登录再保存学习记录，点击顶部导航「用户登录」');
+      return;
+    }
+    if (!currentWord) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/study/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: Number(userId), word_id: currentWord.id }),
+      });
+      const json = await res.json();
+      if (json.code === 200) {
+        message.success('学习记录已保存');
+      } else {
+        message.error(json.msg || '保存失败');
+      }
+    } catch (err) {
+      message.error('保存学习记录失败');
+      console.error('saveStudyRecord error:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
       <Title level={2} style={{ marginBottom: 24 }}>单词记忆首页</Title>
@@ -118,22 +143,10 @@ export default function Home() {
                   </Text>
 
                   <div style={{ marginTop: 10 }}>
-                    <Tag color={getPosColor(item.part_of_speech)}>{item.part_of_speech}</Tag>
-                    <Text style={{ fontSize: 15 }}>{item.meaning}</Text>
+                    <Text style={{ fontSize: 15 }}>{item.basic_meaning || item.meaning}</Text>
                   </div>
 
-                  <Paragraph
-                    type="secondary"
-                    italic
-                    style={{
-                      marginTop: 12, fontSize: 13, background: '#f5f5f5',
-                      padding: '8px 12px', borderRadius: 6
-                    }}
-                  >
-                    "{item.example_sentence}"
-                  </Paragraph>
-
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" style={{ fontSize: 12, marginTop: 12, display: 'block' }}>
                     点击查看 AI 记忆口诀
                   </Text>
                 </Card>
@@ -159,8 +172,15 @@ export default function Home() {
       <Modal
         title={currentWord ? `"${currentWord.word}" AI 记忆素材` : 'AI 记忆素材'}
         open={aiModalOpen}
-        onCancel={() => setAiModalOpen(false)}
-        footer={null}
+        onCancel={() => { setAiModalOpen(false); setAiData(null); }}
+        footer={
+          <Space>
+            <Button icon={<SaveOutlined />} type="primary" loading={saving} onClick={saveStudyRecord}>
+              保存学习记录
+            </Button>
+            <Button onClick={() => { setAiModalOpen(false); setAiData(null); }}>关闭</Button>
+          </Space>
+        }
         width={640}
         destroyOnClose
       >
@@ -181,14 +201,7 @@ export default function Home() {
             </Paragraph>
 
             <Title level={5}>日常例句</Title>
-            <Paragraph>
-              <Tag color="blue">{aiData.part_of_speech}</Tag> {aiData.extra_example}
-            </Paragraph>
-
-            <Title level={5}>原文例句</Title>
-            <Paragraph type="secondary" italic>
-              "{aiData.original_example}"
-            </Paragraph>
+            <Paragraph>{aiData.extra_example}</Paragraph>
           </div>
         ) : (
           <Empty description="未能获取 AI 记忆素材" />
