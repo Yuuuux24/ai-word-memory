@@ -10,6 +10,7 @@ from config import Config
 from routes.word import word_bp
 from routes.ai_api import ai_api_bp
 from routes.record import record_bp
+from routes.user import user_bp
 
 
 def create_app():
@@ -23,6 +24,7 @@ def create_app():
     app.register_blueprint(word_bp)
     app.register_blueprint(ai_api_bp)
     app.register_blueprint(record_bp)
+    app.register_blueprint(user_bp)
 
     # 根路由：健康检查
     @app.route('/')
