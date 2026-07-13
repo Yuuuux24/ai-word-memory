@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Input, Button, Typography, message, Space } from 'antd';
-import { UserOutlined, LoginOutlined } from '@ant-design/icons';
+import { UserOutlined, LoginOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 
 const { Title, Text } = Typography;
@@ -10,6 +10,7 @@ export default function Login() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   // 检查是否已登录
   useEffect(() => {
@@ -17,6 +18,7 @@ export default function Login() {
     const savedUsername = localStorage.getItem('username');
     if (savedUserId && savedUsername) {
       setUsername(savedUsername);
+      setLoggedIn(true);
     }
   }, []);
 
@@ -40,7 +42,8 @@ export default function Login() {
         localStorage.setItem('user_id', json.data.id);
         localStorage.setItem('username', trimmed);
         message.success(json.msg || '登录成功');
-        setTimeout(() => router.push('/'), 500);
+        setLoggedIn(true);
+        setTimeout(() => router.push('/'), 800);
       } else {
         message.error(json.msg || '登录失败');
       }
@@ -56,48 +59,78 @@ export default function Login() {
     localStorage.removeItem('user_id');
     localStorage.removeItem('username');
     setUsername('');
+    setLoggedIn(false);
     message.info('已退出登录');
   };
 
-  const isLoggedIn = () => {
-    return !!localStorage.getItem('user_id');
-  };
-
   return (
-    <div style={{ maxWidth: 480, margin: '60px auto' }}>
-      <Title level={2} style={{ textAlign: 'center', marginBottom: 8 }}>
-        用户登录
-      </Title>
-      <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginBottom: 32 }}>
-        输入用户名即可登录或自动注册，无需密码
-      </Text>
+    <div style={{ maxWidth: 440, margin: '40px auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div
+          style={{
+            width: 64, height: 64, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #6c7cfc 0%, #8b98ff 100%)',
+            margin: '0 auto 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <UserOutlined style={{ fontSize: 28, color: '#fff' }} />
+        </div>
+        <Title level={3} style={{ marginBottom: 4 }}>用户登录</Title>
+        <Text type="secondary">输入用户名即可登录或自动注册，无需密码</Text>
+      </div>
 
-      <Card style={{ borderRadius: 12 }}>
+      <Card
+        style={{
+          borderRadius: 14,
+          border: '1px solid #f0f0f0',
+        }}
+      >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>
-            <Text strong style={{ display: 'block', marginBottom: 8 }}>用户名</Text>
+            <Text strong style={{ display: 'block', marginBottom: 8, fontSize: 14 }}>
+              用户名
+            </Text>
             <Input
               size="large"
               placeholder="请输入用户名"
-              prefix={<UserOutlined />}
+              prefix={<UserOutlined style={{ color: '#b0b0b0' }} />}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onPressEnter={handleLogin}
               maxLength={50}
-              disabled={!!localStorage.getItem('user_id')}
+              disabled={loggedIn}
+              style={{ borderRadius: 10 }}
             />
           </div>
 
-          {isLoggedIn() ? (
-            <Space style={{ width: '100%', justifyContent: 'center' }}>
-              <Text type="success" strong>
-                已登录：{localStorage.getItem('username')}
-              </Text>
-              <Button danger onClick={handleLogout}>退出登录</Button>
-              <Button type="primary" onClick={() => router.push('/')}>
-                进入首页
-              </Button>
-            </Space>
+          {loggedIn ? (
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  padding: '12px 16px',
+                  background: 'linear-gradient(135deg, #f6ffed 0%, #f0fff0 100%)',
+                  borderRadius: 10,
+                  border: '1px solid #d9f7be',
+                  marginBottom: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
+              >
+                <CheckCircleFilled style={{ color: '#52c41a', fontSize: 18 }} />
+                <Text strong style={{ color: '#389e0d' }}>
+                  已登录：{localStorage.getItem('username')}
+                </Text>
+              </div>
+              <Space>
+                <Button danger onClick={handleLogout}>退出登录</Button>
+                <Button type="primary" onClick={() => router.push('/')}>
+                  进入首页
+                </Button>
+              </Space>
+            </div>
           ) : (
             <Button
               type="primary"
@@ -106,14 +139,23 @@ export default function Login() {
               icon={<LoginOutlined />}
               loading={loading}
               onClick={handleLogin}
+              style={{ borderRadius: 10, height: 44 }}
             >
-              {loading ? '登录中...' : '登 录 / 注 册'}
+              {loading ? '登录中...' : '登录 / 注册'}
             </Button>
           )}
         </Space>
       </Card>
 
-      <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginTop: 24 }}>
+      <Text
+        type="secondary"
+        style={{
+          display: 'block',
+          textAlign: 'center',
+          marginTop: 24,
+          fontSize: 13,
+        }}
+      >
         首次输入用户名将自动创建账户，学习记录仅属于你
       </Text>
     </div>

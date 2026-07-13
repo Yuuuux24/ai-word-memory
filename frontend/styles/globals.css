@@ -1,5 +1,93 @@
-/* 全局基础样式 */
+/* ========== 全局基础样式 ========== */
+:root {
+  --primary: #6c7cfc;
+  --primary-light: #8b98ff;
+  --primary-dark: #5563d8;
+  --bg-start: #f0f2ff;
+  --bg-end: #f9faff;
+  --card-bg: #ffffff;
+  --text-primary: #2c2c2c;
+  --text-secondary: #8c8c8c;
+  --shadow: 0 2px 12px rgba(108, 124, 252, 0.08);
+  --shadow-hover: 0 6px 24px rgba(108, 124, 252, 0.15);
+  --radius: 14px;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 50%, #f5f3ff 100%);
+  min-height: 100vh;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== 通用滚动条美化 ========== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b0b0b0;
+}
+
+/* ========== Ant Design 覆盖 ========== */
+.ant-card {
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow) !important;
+  transition: all 0.3s ease !important;
+}
+.ant-card:hover {
+  box-shadow: var(--shadow-hover) !important;
+  transform: translateY(-2px);
+}
+.ant-btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%) !important;
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(108, 124, 252, 0.3);
+  transition: all 0.3s ease;
+}
+.ant-btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%) !important;
+  box-shadow: 0 4px 14px rgba(108, 124, 252, 0.4);
+  transform: translateY(-1px);
+}
+.ant-modal-content {
+  border-radius: 16px !important;
+}
+.ant-pagination {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.ant-skeleton {
+  border-radius: var(--radius);
+}
+.ant-tag {
+  border-radius: 6px;
+}
+
+/* ========== 移动端适配 ========== */
+@media (max-width: 576px) {
+  .ant-card {
+    border-radius: 10px !important;
+  }
+  .ant-modal {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px auto !important;
+  }
+  .ant-pagination-item,
+  .ant-pagination-prev,
+  .ant-pagination-next {
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
 }

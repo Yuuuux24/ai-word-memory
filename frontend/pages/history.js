@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
-  Card, Typography, Empty, Skeleton, Tag,
-  Pagination, message, Modal, Spin, Button, Space,
+  Card, Typography, Empty, Skeleton,
+  Pagination, message, Modal, Spin, Button, Space, Divider
 } from 'antd';
-import { HistoryOutlined, EyeOutlined, LoginOutlined } from '@ant-design/icons';
+import { HistoryOutlined, EyeOutlined, LoginOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 
 const { Title, Text, Paragraph } = Typography;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
-
-const getPosColor = (pos) => {
-  const map = { verb: 'blue', adj: 'green', noun: 'orange', adverb: 'purple', 'verb/noun': 'cyan' };
-  return map[pos] || 'default';
-};
 
 export default function History() {
   const router = useRouter();
@@ -97,75 +92,117 @@ export default function History() {
 
   if (!userId) {
     return (
-      <div style={{ textAlign: 'center', padding: 80 }}>
-        <Spin size="large" tip="正在校验登录状态..." />
+      <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <Spin size="large" />
+        <div style={{ marginTop: 20, color: '#8c8c8c', fontSize: 15 }}>
+          正在校验登录状态...
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <Title level={2} style={{ marginBottom: 8 }}>
-        <HistoryOutlined style={{ marginRight: 8 }} />
-        背诵历史
-      </Title>
-      <Text type="secondary" style={{ display: 'block', marginBottom: 24, fontSize: 15 }}>
-        以下是你的全部学习记录，点击"复习"可重新查看 AI 记忆素材
-      </Text>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <HistoryOutlined style={{ fontSize: 22, color: '#6c7cfc' }} />
+          <Title level={2} style={{ margin: 0 }}>背诵历史</Title>
+        </div>
+        <Text type="secondary" style={{ fontSize: 14 }}>
+          以下是你的全部学习记录，点击「复习」可重新查看 AI 记忆素材
+        </Text>
+      </div>
 
       {loading ? (
         <div>
           {[1, 2, 3].map((i) => (
             <Card key={i} style={{ marginBottom: 12 }}>
-              <Skeleton active paragraph={{ rows: 2 }} />
+              <Skeleton active paragraph={{ rows: 2 }} title={{ width: '30%' }} />
             </Card>
           ))}
         </div>
       ) : records.length === 0 ? (
-        <Empty
-          description="还没有背诵记录，去首页选个单词开始吧！"
-          style={{ marginTop: 60 }}
-        >
+        <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+          <div
+            style={{
+              width: 80, height: 80, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #f0f2ff 0%, #e8ebff 100%)',
+              margin: '0 auto 20px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 36, color: '#bcc3ff',
+            }}
+          >
+            ?
+          </div>
+          <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 16 }}>
+            还没有背诵记录，去首页选个单词开始吧！
+          </Text>
           <Button type="primary" onClick={() => router.push('/')}>
             去背单词
           </Button>
-        </Empty>
+        </div>
       ) : (
         <>
           {records.map((item) => (
             <Card
               key={item.id}
               hoverable
-              style={{ borderRadius: 12, marginBottom: 12 }}
+              style={{
+                borderRadius: 14,
+                marginBottom: 12,
+                border: '1px solid #f0f0f0',
+              }}
               extra={
                 <Button
                   type="link"
                   icon={<EyeOutlined />}
                   onClick={() => handleReview(item)}
+                  style={{ color: '#6c7cfc' }}
                 >
                   复习
                 </Button>
               }
             >
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-                <Title level={4} style={{ margin: 0 }}>{item.word}</Title>
-                <Text type="secondary">{item.phonetic}</Text>
-                {item.part_of_speech && (
-                  <Tag color={getPosColor(item.part_of_speech)}>{item.part_of_speech}</Tag>
-                )}
-              </div>
-              <Text style={{ fontSize: 15 }}>{item.meaning}</Text>
-              <br />
-              <Space style={{ marginTop: 8 }}>
-                <Tag color="blue">已复习 {item.review_count} 次</Tag>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {item.last_reviewed_at ? new Date(item.last_reviewed_at).toLocaleString('zh-CN') : ''}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: 12,
+                  marginBottom: 8,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Title level={4} style={{ margin: 0, color: '#4a54c9' }}>
+                  {item.word}
+                </Title>
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  {item.phonetic}
                 </Text>
-              </Space>
+              </div>
+              <div
+                style={{
+                  padding: '8px 14px',
+                  background: 'linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%)',
+                  borderRadius: 8,
+                  display: 'inline-block',
+                }}
+              >
+                <Text style={{ fontSize: 15, color: '#4a4a4a' }}>
+                  {item.meaning}
+                </Text>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  <CalendarOutlined style={{ marginRight: 4 }} />
+                  {item.study_date
+                    ? new Date(item.study_date).toLocaleString('zh-CN')
+                    : ''}
+                </Text>
+              </div>
             </Card>
           ))}
 
-          <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <div style={{ textAlign: 'center', marginTop: 28 }}>
             <Pagination
               current={page}
               pageSize={size}
@@ -174,6 +211,7 @@ export default function History() {
               showSizeChanger
               pageSizeOptions={['5', '10', '20']}
               showTotal={(t) => `共 ${t} 条记录`}
+              responsive
             />
           </div>
         </>
@@ -181,37 +219,134 @@ export default function History() {
 
       {/* 复习弹窗 */}
       <Modal
-        title={reviewWord ? `复习 "${reviewWord.word}"` : '复习记忆素材'}
-        open={reviewModalOpen}
-        onCancel={() => setReviewModalOpen(false)}
-        footer={
-          <Button onClick={() => {
-            setReviewModalOpen(false);
-            setReviewData(null);
-          }}>关闭</Button>
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 18 }}>
+              {reviewWord ? `复习 "${reviewWord.word}"` : '复习记忆素材'}
+            </span>
+          </div>
         }
-        width={640}
+        open={reviewModalOpen}
+        onCancel={() => { setReviewModalOpen(false); setReviewData(null); }}
+        footer={
+          <Button
+            onClick={() => {
+              setReviewModalOpen(false);
+              setReviewData(null);
+            }}
+          >
+            关闭
+          </Button>
+        }
+        width={680}
         destroyOnClose
+        style={{ top: 40 }}
       >
         {reviewLoading ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>
-            <Spin tip="正在加载记忆素材..." size="large">
-              <div style={{ height: 80 }} />
-            </Spin>
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <Spin size="large" />
+            <div style={{ marginTop: 20, color: '#8c8c8c', fontSize: 15 }}>
+              正在加载记忆素材...
+            </div>
           </div>
         ) : reviewData ? (
-          <div style={{ lineHeight: 2 }}>
-            <Title level={5}>词根 / 词缀解析</Title>
-            <Paragraph>{reviewData.root_analysis}</Paragraph>
-            <Title level={5}>趣味记忆口诀</Title>
-            <Paragraph style={{ background: '#fff7e6', padding: '10px 14px', borderRadius: 8 }}>
-              {reviewData.mnemonic}
-            </Paragraph>
-            <Title level={5}>日常例句</Title>
-            <Paragraph>{reviewData.extra_example}</Paragraph>
+          <div style={{ lineHeight: 1.8 }}>
+            {/* 词根 / 词缀解析 */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div
+                  style={{
+                    width: 4, height: 18, borderRadius: 2,
+                    background: 'linear-gradient(180deg, #6c7cfc 0%, #8b98ff 100%)',
+                  }}
+                />
+                <Text strong style={{ fontSize: 15, color: '#4a54c9' }}>词根 / 词缀解析</Text>
+              </div>
+              <div
+                style={{
+                  padding: '12px 16px',
+                  background: '#fafbff',
+                  borderRadius: 10,
+                  border: '1px solid #f0f2ff',
+                  fontSize: 14,
+                  color: '#555',
+                }}
+              >
+                {reviewData.root_analysis}
+              </div>
+            </div>
+
+            <Divider style={{ margin: '16px 0', borderColor: '#f0f0f0' }} />
+
+            {/* 趣味记忆口诀 */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div
+                  style={{
+                    width: 4, height: 18, borderRadius: 2,
+                    background: 'linear-gradient(180deg, #f5a623 0%, #ffc53d 100%)',
+                  }}
+                />
+                <Text strong style={{ fontSize: 15, color: '#d48806' }}>趣味记忆口诀</Text>
+              </div>
+              <div
+                style={{
+                  padding: '14px 18px',
+                  background: 'linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%)',
+                  borderRadius: 10,
+                  border: '1px solid #ffe58f',
+                  fontSize: 14,
+                  color: '#5c4a00',
+                  lineHeight: 1.8,
+                }}
+              >
+                {reviewData.mnemonic}
+              </div>
+            </div>
+
+            <Divider style={{ margin: '16px 0', borderColor: '#f0f0f0' }} />
+
+            {/* 日常例句 */}
+            <div style={{ marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div
+                  style={{
+                    width: 4, height: 18, borderRadius: 2,
+                    background: 'linear-gradient(180deg, #52c41a 0%, #73d13d 100%)',
+                  }}
+                />
+                <Text strong style={{ fontSize: 15, color: '#389e0d' }}>日常例句</Text>
+              </div>
+              <div
+                style={{
+                  padding: '12px 16px',
+                  background: '#f6ffed',
+                  borderRadius: 10,
+                  border: '1px solid #d9f7be',
+                  fontSize: 14,
+                  color: '#3d5a1e',
+                  fontStyle: 'italic',
+                }}
+              >
+                {reviewData.extra_example}
+              </div>
+            </div>
           </div>
         ) : (
-          <Empty description="未能获取记忆素材" />
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <Text type="secondary" style={{ fontSize: 15 }}>
+              未能获取记忆素材
+            </Text>
+            <br />
+            <Button
+              type="link"
+              icon={<ReloadOutlined />}
+              style={{ marginTop: 12 }}
+              onClick={() => reviewWord && handleReview(reviewWord)}
+            >
+              重试
+            </Button>
+          </div>
         )}
       </Modal>
     </div>

@@ -17,9 +17,30 @@ export default function Layout({ children }) {
   };
 
   return (
-    <AntLayout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px' }}>
-        <div style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginRight: 40, whiteSpace: 'nowrap' }}>
+    <AntLayout style={{ minHeight: '100vh', background: 'transparent' }}>
+      <Header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 24px',
+          background: 'linear-gradient(135deg, #4a54c9 0%, #6c7cfc 100%)',
+          boxShadow: '0 2px 12px rgba(74, 84, 201, 0.25)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          height: 56,
+        }}
+      >
+        <div
+          style={{
+            color: '#fff',
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginRight: 40,
+            whiteSpace: 'nowrap',
+            letterSpacing: 1,
+          }}
+        >
           AI 单词记忆
         </div>
         <Menu
@@ -28,11 +49,25 @@ export default function Layout({ children }) {
           selectedKeys={[router.pathname]}
           items={menuItems}
           onClick={handleMenuClick}
-          style={{ flex: 1, minWidth: 0 }}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            background: 'transparent',
+            borderBottom: 'none',
+          }}
         />
       </Header>
-      <Content style={{ padding: '24px', background: '#f5f5f5' }}>
-        <div style={{ background: '#fff', padding: 24, borderRadius: 8, minHeight: 'calc(100vh - 112px)' }}>
+      <Content style={{ padding: '24px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+        <div
+          style={{
+            background: 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(10px)',
+            padding: 28,
+            borderRadius: 16,
+            minHeight: 'calc(100vh - 112px)',
+            boxShadow: '0 4px 20px rgba(108,124,252,0.06)',
+          }}
+        >
           {children}
         </div>
       </Content>
