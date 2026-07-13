@@ -5,8 +5,8 @@ const { Header, Content } = AntLayout;
 
 const menuItems = [
   { key: '/', label: '单词首页' },
-  { key: '/ai-test', label: 'AI智能测试' },
-  { key: '/record', label: '学习记录' },
+  { key: '/history', label: '背诵历史' },
+  { key: '/login', label: '用户登录' },
 ];
 
 export default function Layout({ children }) {
