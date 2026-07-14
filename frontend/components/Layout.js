@@ -66,7 +66,7 @@ export default function Layout({ children }) {
               onClose={() => setDrawerOpen(false)}
               open={drawerOpen}
               width={200}
-              bodyStyle={{ padding: 0 }}
+              styles={{ body: { padding: 0 } }}
             >
               <Menu
                 mode="vertical"

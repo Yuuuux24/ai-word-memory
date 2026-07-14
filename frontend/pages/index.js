@@ -9,7 +9,6 @@ import AIMemoModal from '@/components/AIMemoModal';
 
 const { Title, Text } = Typography;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
-const AI_TIMEOUT = 30000;
 
 export default function Home() {
   const [words, setWords] = useState([]);
