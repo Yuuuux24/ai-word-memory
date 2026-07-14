@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card, Typography, Skeleton, Row, Col,
-  Modal, Spin, Pagination, Button, Space, Divider, Progress, Input
+  Modal, Spin, Pagination, Button, Space, Divider, Progress, Input, Tag
 } from 'antd';
-import { SoundOutlined, SaveOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { SoundOutlined, SaveOutlined, ReloadOutlined, SearchOutlined, CheckOutlined, UndoOutlined } from '@ant-design/icons';
 import { showError, showWarning, showSuccess, showInfo } from '@/utils/errorHandler';
 
 const { Title, Text } = Typography;
@@ -183,6 +183,33 @@ export default function Home() {
     if (currentWord) handleCardClick(currentWord);
   }, [currentWord, handleCardClick]);
 
+  // 单词掌握状态切换
+  const [statusUpdating, setStatusUpdating] = useState({});
+  const toggleReviewStatus = useCallback(async (e, item) => {
+    e.stopPropagation(); // 阻止冒泡到卡片点击
+    setStatusUpdating(prev => ({ ...prev, [item.id]: true }));
+    try {
+      const newStatus = (item.review_status === 1) ? 0 : 1;
+      const res = await fetch(`${API_BASE}/api/words/${item.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review_status: newStatus }),
+      });
+      const json = await res.json();
+      if (json.code === 200) {
+        // 本地更新状态（避免重新请求全量数据）
+        setWords(prev => prev.map(w => w.id === item.id ? { ...w, review_status: newStatus } : w));
+        newStatus === 1 ? showSuccess('已标记为"已掌握"') : showWarning('已标记为"待复习"');
+      } else {
+        showError(json.msg || '状态更新失败');
+      }
+    } catch (err) {
+      showError(err, '状态更新失败，请稍后重试');
+    } finally {
+      setStatusUpdating(prev => ({ ...prev, [item.id]: false }));
+    }
+  }, []);
+
   return (
     <div>
       <Title level={2} style={{ marginBottom: 4, fontSize: 24 }}>单词记忆首页</Title>
@@ -237,7 +264,23 @@ export default function Home() {
                   <div style={{ marginTop: 12, padding: '8px 12px', background: 'linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%)', borderRadius: 8 }}>
                     <Text style={{ fontSize: 14, color: '#4a4a4a' }}>{item.basic_meaning}</Text>
                   </div>
-                  <div style={{ marginTop: 10, fontSize: 12, color: '#b0b0b0', textAlign: 'right' }}>点击查看 AI 记忆口诀 →</div>
+                  <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Button
+                      size="small"
+                      type={item.review_status === 1 ? 'default' : 'primary'}
+                      icon={item.review_status === 1 ? <UndoOutlined /> : <CheckOutlined />}
+                      loading={!!statusUpdating[item.id]}
+                      onClick={(e) => toggleReviewStatus(e, item)}
+                      style={{
+                        borderRadius: 6,
+                        fontSize: 12,
+                        ...(item.review_status === 1 ? { color: '#52c41a', borderColor: '#52c41a' } : {}),
+                      }}
+                    >
+                      {item.review_status === 1 ? '已掌握' : '标记掌握'}
+                    </Button>
+                    <span style={{ fontSize: 12, color: '#b0b0b0' }}>点击查看 AI 记忆口诀 →</span>
+                  </div>
                 </Card>
               </Col>
             ))}

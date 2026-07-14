@@ -73,6 +73,7 @@ def get_study_list():
         page = request.args.get('page', 1, type=int)
         size = request.args.get('size', 10, type=int)
         filter_date = request.args.get('date', '').strip()
+        review_status = request.args.get('review_status', type=int)
 
         if page < 1:
             page = 1
@@ -83,21 +84,39 @@ def get_study_list():
 
         supabase = get_supabase()
 
-        # 构建查询
-        query = supabase.table('study_record').select('*, words!inner(id,word,phonetic,basic_meaning)')
+        # 构建查询（包含 review_status 字段用于过滤和显示）
+        select_fields = '*, words!inner(id,word,phonetic,basic_meaning,review_status)'
 
-        # 日期筛选：匹配 study_date 字段（日期部分的字符串比较）
-        if filter_date:
-            query = query.gte('study_date', filter_date + 'T00:00:00').lt('study_date', filter_date + 'T23:59:59')
-
-        query = query.eq('user_id', user_id)
-
-        # 先查总数（limit(0) 只返回 count，不拉数据）
-        count_query = supabase.table('study_record').select('id', count='exact').eq('user_id', user_id)
+        # 获取用户全部学习记录（含关联单词信息）
+        count_query = supabase.table('study_record').select(select_fields).eq('user_id', user_id)
         if filter_date:
             count_query = count_query.gte('study_date', filter_date + 'T00:00:00').lt('study_date', filter_date + 'T23:59:59')
-        count_result = count_query.limit(0).execute()
-        total = count_result.count if count_result.count else 0
+        count_result = count_query.order('study_date', desc=True).execute()
+
+        # 从查询结果中构建记录列表
+        all_data = count_result.data if count_result.data else []
+        records = []
+        for r in all_data:
+            wi = r.get('words', {})
+            # Python 侧兜底过滤 review_status
+            if review_status is not None and review_status in (0, 1):
+                ws = wi.get('review_status')
+                if ws is None:
+                    ws = 0  # 字段不存在时默认待复习
+                if ws != review_status:
+                    continue
+            records.append({
+                'id': r['id'],
+                'user_id': r['user_id'],
+                'word_id': r['word_id'],
+                'word': wi.get('word', ''),
+                'phonetic': wi.get('phonetic', ''),
+                'meaning': wi.get('basic_meaning', ''),
+                'review_status': wi.get('review_status'),
+                'study_date': r.get('study_date'),
+            })
+
+        total = len(records)
 
         # 分页
         offset = (page - 1) * size
@@ -105,23 +124,7 @@ def get_study_list():
             offset = max(0, total - size)
             page = (offset // size) + 1
 
-        result = query.order('study_date', desc=True) \
-            .range(offset, offset + size - 1) \
-            .execute()
-
-        records = []
-        if result.data:
-            for r in result.data:
-                wi = r.get('words', {})
-                records.append({
-                    'id': r['id'],
-                    'user_id': r['user_id'],
-                    'word_id': r['word_id'],
-                    'word': wi.get('word', ''),
-                    'phonetic': wi.get('phonetic', ''),
-                    'meaning': wi.get('basic_meaning', ''),
-                    'study_date': r.get('study_date'),
-                })
+        records = records[offset:offset + size]
 
         return json_response(data={'list': records, 'total': total, 'page': page, 'size': size})
     except Exception as e:

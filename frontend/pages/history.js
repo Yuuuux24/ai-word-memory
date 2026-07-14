@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Card, Typography, Skeleton,
+  Card, Typography, Skeleton, Select,
   Pagination, Modal, Spin, Button, Space, Divider, DatePicker
 } from 'antd';
-import { HistoryOutlined, EyeOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
+import { HistoryOutlined, EyeOutlined, ReloadOutlined, CalendarOutlined, FilterOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { showError, showWarning, showInfo } from '@/utils/errorHandler';
 import dayjs from 'dayjs';
@@ -20,6 +20,7 @@ export default function History() {
   const [size, setSize] = useState(10);
   const [userId, setUserId] = useState(null);
   const [filterDate, setFilterDate] = useState(null);
+  const [reviewStatusFilter, setReviewStatusFilter] = useState(undefined); // 0=待复习, 1=已掌握, undefined=全部
 
   const debounceTimer = useRef(null);
 
@@ -38,11 +39,12 @@ export default function History() {
     setUserId(Number(uid));
   }, [router]);
 
-  const fetchRecords = useCallback(async (p, s, date) => {
+  const fetchRecords = useCallback(async (p, s, date, rs) => {
     setLoading(true);
     try {
       let url = `${API_BASE}/api/study/list?user_id=${userId}&page=${p}&size=${s}`;
       if (date) url += `&date=${dayjs(date).format('YYYY-MM-DD')}`;
+      if (rs !== undefined && rs !== null) url += `&review_status=${rs}`;
       const res = await fetch(url);
       const json = await res.json();
       if (json.code === 200 && json.data) {
@@ -61,10 +63,10 @@ export default function History() {
   useEffect(() => {
     if (userId) {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
-      debounceTimer.current = setTimeout(() => fetchRecords(page, size, filterDate), 300);
+      debounceTimer.current = setTimeout(() => fetchRecords(page, size, filterDate, reviewStatusFilter), 300);
       return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current); };
     }
-  }, [userId, page, size, filterDate, fetchRecords]);
+  }, [userId, page, size, filterDate, reviewStatusFilter, fetchRecords]);
 
   const handleReview = useCallback(async (item) => {
     setReviewWord(item);
@@ -138,7 +140,24 @@ export default function History() {
             style={{ borderRadius: 8 }}
             allowClear={false}
           />
-          {filterDate && <Button size="small" onClick={clearDateFilter}>清除筛选</Button>}
+          <FilterOutlined style={{ color: '#6c7cfc', fontSize: 16, marginLeft: 4 }} />
+          <Select
+            value={reviewStatusFilter}
+            onChange={(val) => { setReviewStatusFilter(val); setPage(1); }}
+            placeholder="复习状态"
+            style={{ width: 130, borderRadius: 8 }}
+            allowClear
+            onClear={() => { setReviewStatusFilter(undefined); setPage(1); }}
+            options={[
+              { value: 0, label: '待复习' },
+              { value: 1, label: '已掌握' },
+            ]}
+          />
+          {(filterDate || reviewStatusFilter !== undefined) && (
+            <Button size="small" onClick={() => { clearDateFilter(); setReviewStatusFilter(undefined); }}>
+              清除全部筛选
+            </Button>
+          )}
         </div>
       </div>
 
@@ -167,6 +186,18 @@ export default function History() {
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
                 <Title level={4} style={{ margin: 0, color: '#4a54c9', fontSize: 18 }}>{item.word}</Title>
                 <Text type="secondary" style={{ fontSize: 13 }}>{item.phonetic}</Text>
+                {item.review_status !== undefined && item.review_status !== null && (
+                  <span style={{
+                    fontSize: 12,
+                    padding: '1px 8px',
+                    borderRadius: 4,
+                    background: item.review_status === 1 ? '#f6ffed' : '#fff7e6',
+                    color: item.review_status === 1 ? '#52c41a' : '#faad14',
+                    border: `1px solid ${item.review_status === 1 ? '#b7eb8f' : '#ffe58f'}`,
+                  }}>
+                    {item.review_status === 1 ? '已掌握' : '待复习'}
+                  </span>
+                )}
               </div>
               <div style={{ padding: '8px 14px', background: 'linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%)', borderRadius: 8, display: 'inline-block' }}>
                 <Text style={{ fontSize: 14, color: '#4a4a4a' }}>{item.meaning}</Text>
