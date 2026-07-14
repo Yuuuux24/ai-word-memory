@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card, Typography, Skeleton, Select,
-  Pagination, Modal, Spin, Button, Space, Divider, DatePicker
+  Pagination, Button, Space, DatePicker
 } from 'antd';
-import { HistoryOutlined, EyeOutlined, ReloadOutlined, CalendarOutlined, FilterOutlined } from '@ant-design/icons';
+import { HistoryOutlined, EyeOutlined, CalendarOutlined, FilterOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { showError, showWarning, showInfo } from '@/utils/errorHandler';
+import AIMemoModal from '@/components/AIMemoModal';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -25,8 +26,6 @@ export default function History() {
   const debounceTimer = useRef(null);
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewData, setReviewData] = useState(null);
   const [reviewWord, setReviewWord] = useState(null);
 
   useEffect(() => {
@@ -68,29 +67,9 @@ export default function History() {
     }
   }, [userId, page, size, filterDate, reviewStatusFilter, fetchRecords]);
 
-  const handleReview = useCallback(async (item) => {
-    setReviewWord(item);
+  const handleReview = useCallback((item) => {
+    setReviewWord({ id: item.word_id, word: item.word });
     setReviewModalOpen(true);
-    setReviewLoading(true);
-    setReviewData(null);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/ai/memo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word_id: item.word_id }),
-      });
-      const json = await res.json();
-      if (json.code === 200) {
-        setReviewData(json.data);
-      } else {
-        showError(json.msg || '获取记忆素材失败，请稍后重试');
-      }
-    } catch (err) {
-      showError(err, 'AI 接口请求失败，请稍后重试');
-    } finally {
-      setReviewLoading(false);
-    }
   }, []);
 
   const handlePageChange = useCallback((p, s) => {
@@ -110,7 +89,7 @@ export default function History() {
 
   const closeReviewModal = useCallback(() => {
     setReviewModalOpen(false);
-    setReviewData(null);
+    setReviewWord(null);
   }, []);
 
   if (!userId) {
@@ -227,54 +206,12 @@ export default function History() {
       )}
 
       {/* 复习弹窗 */}
-      <Modal
-        title={<span style={{ fontSize: 18 }}>{reviewWord ? `复习 "${reviewWord.word}"` : '复习记忆素材'}</span>}
+      <AIMemoModal
         open={reviewModalOpen}
-        onCancel={closeReviewModal}
-        footer={<Button onClick={closeReviewModal}>关闭</Button>}
-        width={680}
-        destroyOnClose
-        style={{ top: 40 }}
-      >
-        {reviewLoading ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <Spin size="large" />
-            <div style={{ marginTop: 20, color: '#8c8c8c', fontSize: 14 }}>正在加载记忆素材...</div>
-          </div>
-        ) : reviewData ? (
-          <div style={{ lineHeight: 1.8 }}>
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 4, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #6c7cfc 0%, #8b98ff 100%)' }} />
-                <Text strong style={{ fontSize: 15, color: '#4a54c9' }}>词根 / 词缀解析</Text>
-              </div>
-              <div style={{ padding: '12px 16px', background: '#fafbff', borderRadius: 10, border: '1px solid #f0f2ff', fontSize: 14, color: '#555' }}>{reviewData.root_analysis}</div>
-            </div>
-            <Divider style={{ margin: '16px 0' }} />
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 4, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #f5a623 0%, #ffc53d 100%)' }} />
-                <Text strong style={{ fontSize: 15, color: '#d48806' }}>趣味记忆口诀</Text>
-              </div>
-              <div style={{ padding: '14px 18px', background: 'linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%)', borderRadius: 10, border: '1px solid #ffe58f', fontSize: 14, color: '#5c4a00', lineHeight: 1.8 }}>{reviewData.mnemonic}</div>
-            </div>
-            <Divider style={{ margin: '16px 0' }} />
-            <div style={{ marginBottom: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 4, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #52c41a 0%, #73d13d 100%)' }} />
-                <Text strong style={{ fontSize: 15, color: '#389e0d' }}>日常例句</Text>
-              </div>
-              <div style={{ padding: '12px 16px', background: '#f6ffed', borderRadius: 10, border: '1px solid #d9f7be', fontSize: 14, color: '#3d5a1e', fontStyle: 'italic' }}>{reviewData.extra_example}</div>
-            </div>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <Text type="secondary" style={{ fontSize: 15 }}>未能获取记忆素材</Text>
-            <br />
-            <Button type="link" icon={<ReloadOutlined />} style={{ marginTop: 12 }} onClick={() => reviewWord && handleReview(reviewWord)}>重试</Button>
-          </div>
-        )}
-      </Modal>
+        word={reviewWord}
+        onClose={closeReviewModal}
+        showSaveBtn={false}
+      />
     </div>
   );
 }

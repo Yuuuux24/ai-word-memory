@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card, Typography, Skeleton, Row, Col,
-  Modal, Spin, Pagination, Button, Space, Divider, Progress, Input, Tag
+  Pagination, Button, Space, Input
 } from 'antd';
-import { SoundOutlined, SaveOutlined, ReloadOutlined, SearchOutlined, CheckOutlined, UndoOutlined } from '@ant-design/icons';
-import { showError, showWarning, showSuccess, showInfo } from '@/utils/errorHandler';
+import { SoundOutlined, ReloadOutlined, SearchOutlined, CheckOutlined, UndoOutlined } from '@ant-design/icons';
+import { showError, showWarning, showSuccess } from '@/utils/errorHandler';
+import AIMemoModal from '@/components/AIMemoModal';
 
 const { Title, Text } = Typography;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
@@ -23,16 +24,8 @@ export default function Home() {
 
   // AI 弹窗
   const [aiModalOpen, setAiModalOpen] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiData, setAiData] = useState(null);
   const [currentWord, setCurrentWord] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [fetchError, setFetchError] = useState(false);
-  const [aiTimeout, setAiTimeout] = useState(false);
-  const [aiCountdown, setAiCountdown] = useState(0);
-  const aiTimerRef = useRef(null);
-  const aiCountdownRef = useRef(null);
-  const aiAbortRef = useRef(null);
 
   const fetchWords = useCallback(async (p, s, kw) => {
     setLoading(true);
@@ -74,114 +67,20 @@ export default function Home() {
     }, 400);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
-      if (aiCountdownRef.current) clearInterval(aiCountdownRef.current);
-      if (aiAbortRef.current) aiAbortRef.current.abort();
-    };
-  }, []);
-
   const closeAiModal = useCallback(() => {
     setAiModalOpen(false);
-    setAiData(null);
     setCurrentWord(null);
-    if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
-    if (aiCountdownRef.current) clearInterval(aiCountdownRef.current);
-    if (aiAbortRef.current) aiAbortRef.current.abort();
   }, []);
 
-  const handleCardClick = useCallback(async (item) => {
+  const handleCardClick = useCallback((item) => {
     setCurrentWord(item);
     setAiModalOpen(true);
-    setAiLoading(true);
-    setAiData(null);
-    setAiTimeout(false);
-    setAiCountdown(0);
-
-    if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
-    if (aiCountdownRef.current) clearInterval(aiCountdownRef.current);
-
-    let countdown = Math.ceil(AI_TIMEOUT / 1000);
-    setAiCountdown(countdown);
-    aiCountdownRef.current = setInterval(() => {
-      countdown--;
-      setAiCountdown(countdown);
-      if (countdown <= 0) clearInterval(aiCountdownRef.current);
-    }, 1000);
-
-    aiTimerRef.current = setTimeout(() => {
-      setAiTimeout(true);
-      setAiLoading(false);
-      if (aiAbortRef.current) aiAbortRef.current.abort();
-      clearInterval(aiCountdownRef.current);
-    }, AI_TIMEOUT);
-
-    aiAbortRef.current = new AbortController();
-
-    try {
-      const res = await fetch(`${API_BASE}/api/ai/memo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word_id: item.id }),
-        signal: aiAbortRef.current.signal,
-      });
-      clearTimeout(aiTimerRef.current);
-      clearInterval(aiCountdownRef.current);
-      const json = await res.json();
-      if (json.code === 200) {
-        setAiData(json.data);
-      } else {
-        showError(json.msg || 'AI 生成失败，请稍后重试');
-      }
-    } catch (err) {
-      clearTimeout(aiTimerRef.current);
-      clearInterval(aiCountdownRef.current);
-      if (err.name !== 'AbortError') {
-        showError(err, 'AI 生成失败，请稍后重试');
-      }
-    } finally {
-      setAiLoading(false);
-    }
   }, []);
 
   const handlePageChange = useCallback((p, s) => {
     setPage(p);
     setSize(s);
   }, []);
-
-  const saveStudyRecord = useCallback(async () => {
-    const userId = localStorage.getItem('user_id');
-    if (!userId) {
-      showInfo('请先登录再保存学习记录，点击顶部「用户登录」');
-      return;
-    }
-    if (!currentWord) return;
-
-    setSaving(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/study/add`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: Number(userId), word_id: currentWord.id }),
-      });
-      const json = await res.json();
-      if (json.code === 200) {
-        showSuccess(json.msg || '学习记录已保存');
-      } else {
-        showError(json.msg || '保存失败，请稍后重试');
-      }
-    } catch (err) {
-      showError(err, '保存学习记录失败，请稍后重试');
-    } finally {
-      setSaving(false);
-    }
-  }, [currentWord]);
-
-  // Actually let me use the imported showSuccess... let me import message directly
-  const retryAi = useCallback(() => {
-    if (currentWord) handleCardClick(currentWord);
-  }, [currentWord, handleCardClick]);
 
   // 单词掌握状态切换
   const [statusUpdating, setStatusUpdating] = useState({});
@@ -302,66 +201,12 @@ export default function Home() {
       )}
 
       {/* AI 记忆素材弹窗 */}
-      <Modal
-        title={<span style={{ fontSize: 18 }}>{currentWord ? `"${currentWord.word}" AI 记忆素材` : 'AI 记忆素材'}</span>}
+      <AIMemoModal
         open={aiModalOpen}
-        onCancel={closeAiModal}
-        footer={
-          <Space>
-            <Button icon={<SaveOutlined />} type="primary" loading={saving} onClick={saveStudyRecord}>保存学习记录</Button>
-            <Button onClick={closeAiModal}>关闭</Button>
-          </Space>
-        }
-        width={680}
-        destroyOnClose
-        style={{ top: 40 }}
-      >
-        {aiLoading ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <Spin size="large" />
-            <div style={{ marginTop: 20, color: '#8c8c8c', fontSize: 14 }}>AI 正在生成记忆素材... 超时剩余 {aiCountdown} 秒</div>
-            <Progress percent={Math.max(0, Math.round(((AI_TIMEOUT / 1000 - aiCountdown) / (AI_TIMEOUT / 1000)) * 100))} showInfo={false} strokeColor={{ from: '#6c7cfc', to: '#8b98ff' }} style={{ maxWidth: 300, margin: '12px auto 0' }} />
-          </div>
-        ) : aiTimeout ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #fff1f0 0%, #ffccc7 100%)', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: '#ff7875' }}>!</div>
-            <Text type="secondary" style={{ fontSize: 15, display: 'block', marginBottom: 20 }}>AI 生成超时，请稍后重试</Text>
-            <Button type="primary" icon={<ReloadOutlined />} onClick={retryAi}>重新生成</Button>
-          </div>
-        ) : aiData ? (
-          <div style={{ lineHeight: 1.8 }}>
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 4, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #6c7cfc 0%, #8b98ff 100%)' }} />
-                <Text strong style={{ fontSize: 15, color: '#4a54c9' }}>词根 / 词缀解析</Text>
-              </div>
-              <div style={{ padding: '12px 16px', background: '#fafbff', borderRadius: 10, border: '1px solid #f0f2ff', fontSize: 14, color: '#555' }}>{aiData.root_analysis}</div>
-            </div>
-            <Divider style={{ margin: '16px 0' }} />
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 4, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #f5a623 0%, #ffc53d 100%)' }} />
-                <Text strong style={{ fontSize: 15, color: '#d48806' }}>趣味记忆口诀</Text>
-              </div>
-              <div style={{ padding: '14px 18px', background: 'linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%)', borderRadius: 10, border: '1px solid #ffe58f', fontSize: 14, color: '#5c4a00', lineHeight: 1.8 }}>{aiData.mnemonic}</div>
-            </div>
-            <Divider style={{ margin: '16px 0' }} />
-            <div style={{ marginBottom: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 4, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #52c41a 0%, #73d13d 100%)' }} />
-                <Text strong style={{ fontSize: 15, color: '#389e0d' }}>日常例句</Text>
-              </div>
-              <div style={{ padding: '12px 16px', background: '#f6ffed', borderRadius: 10, border: '1px solid #d9f7be', fontSize: 14, color: '#3d5a1e', fontStyle: 'italic' }}>{aiData.extra_example}</div>
-            </div>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <Text type="secondary" style={{ fontSize: 15 }}>未能获取 AI 记忆素材</Text>
-            <br />
-            <Button type="link" icon={<ReloadOutlined />} style={{ marginTop: 12 }} onClick={retryAi}>重试</Button>
-          </div>
-        )}
-      </Modal>
+        word={currentWord}
+        onClose={closeAiModal}
+        showSaveBtn
+      />
     </div>
   );
 }
