@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Card, Typography, Skeleton, Select,
+  Card, Typography, Skeleton, Select, Popconfirm, message,
   Pagination, Button, Space, DatePicker
 } from 'antd';
 import { HistoryOutlined, EyeOutlined, CalendarOutlined, FilterOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -92,6 +92,22 @@ export default function History() {
     setReviewWord(null);
   }, []);
 
+  const handleDeleteRecord = useCallback(async (recordId) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/study/${recordId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.code === 200) {
+        message.success(json.msg || '记录已删除');
+        setRecords(prev => prev.filter(r => r.id !== recordId));
+        setTotal(prev => prev - 1);
+      } else {
+        showError(json.msg || '删除失败，请稍后重试');
+      }
+    } catch (err) {
+      showError(err, '删除学习记录失败，请稍后重试');
+    }
+  }, []);
+
   if (!userId) {
     return (
       <div style={{ textAlign: 'center', padding: '80px 20px' }}>
@@ -161,7 +177,14 @@ export default function History() {
         <>
           {records.map((item) => (
             <Card key={item.id} hoverable style={{ borderRadius: 14, marginBottom: 12, border: '1px solid #f0f0f0' }}
-              extra={<Button type="link" icon={<EyeOutlined />} onClick={() => handleReview(item)} style={{ color: '#6c7cfc' }}>复习</Button>}>
+              extra={
+                <Space>
+                  <Button type="link" icon={<EyeOutlined />} onClick={() => handleReview(item)} style={{ color: '#6c7cfc' }}>复习</Button>
+                  <Popconfirm title="确定删除此学习记录？" onConfirm={() => handleDeleteRecord(item.id)} okText="删除" cancelText="取消">
+                    <Button type="link" danger icon={<DeleteOutlined />} size="small">删除</Button>
+                  </Popconfirm>
+                </Space>
+              }>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
                 <Title level={4} style={{ margin: 0, color: '#4a54c9', fontSize: 18 }}>{item.word}</Title>
                 <Text type="secondary" style={{ fontSize: 13 }}>{item.phonetic}</Text>

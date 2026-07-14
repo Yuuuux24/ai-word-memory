@@ -61,8 +61,8 @@ def get_words():
             'keyword': keyword if keyword else None
         })
 
-    except Exception as e:
-        return json_response(code=500, msg=f'获取单词列表失败，请稍后重试')
+    except Exception:
+        return json_response(code=500, msg='获取单词列表失败，请稍后重试')
 
 
 @word_bp.route('/<int:word_id>', methods=['GET'])
@@ -80,8 +80,8 @@ def get_word_detail(word_id):
 
         return json_response(data=result.data[0])
 
-    except Exception as e:
-        return json_response(code=500, msg=f'获取单词详情失败: {str(e)}')
+    except Exception:
+        return json_response(code=500, msg='获取单词详情失败，请稍后重试')
 
 
 @word_bp.route('', methods=['POST'])
@@ -171,4 +171,21 @@ def update_word_status(word_id):
         err_msg = str(e)
         if 'review_status' in err_msg.lower() and ('not exist' in err_msg.lower() or 'column' in err_msg.lower()):
             return json_response(code=500, msg='数据库缺少 review_status 字段，请在 Supabase 执行: ALTER TABLE words ADD COLUMN IF NOT EXISTS review_status INTEGER DEFAULT 0;')
-        return json_response(code=500, msg=f'更新单词状态失败，请稍后重试')
+        return json_response(code=500, msg='更新单词状态失败，请稍后重试')
+
+
+@word_bp.route('/<int:word_id>', methods=['DELETE'])
+def delete_word(word_id):
+    """删除单词"""
+    try:
+        supabase = get_supabase()
+
+        check = supabase.table('words').select('id,word').eq('id', word_id).execute()
+        if not check.data:
+            return json_response(code=404, msg='单词不存在')
+
+        word_text = check.data[0].get('word', '')
+        supabase.table('words').delete().eq('id', word_id).execute()
+        return json_response(msg=f'单词"{word_text}"已删除')
+    except Exception:
+        return json_response(code=500, msg='删除单词失败，请稍后重试')
