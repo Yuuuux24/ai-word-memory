@@ -59,7 +59,7 @@ def add_study_record():
             }).execute()
             return json_response(msg='学习记录保存成功')
     except Exception as e:
-        return json_response(code=500, msg=f'保存学习记录失败: {str(e)}')
+        return json_response(code=500, msg='保存学习记录失败，请稍后重试')
 
 
 @record_bp.route('/list', methods=['GET'])
@@ -92,8 +92,11 @@ def get_study_list():
 
         query = query.eq('user_id', user_id)
 
-        # 先查总数
-        count_result = query.execute()
+        # 先查总数（limit(0) 只返回 count，不拉数据）
+        count_query = supabase.table('study_record').select('id', count='exact').eq('user_id', user_id)
+        if filter_date:
+            count_query = count_query.gte('study_date', filter_date + 'T00:00:00').lt('study_date', filter_date + 'T23:59:59')
+        count_result = count_query.limit(0).execute()
         total = count_result.count if count_result.count else 0
 
         # 分页
@@ -122,4 +125,4 @@ def get_study_list():
 
         return json_response(data={'list': records, 'total': total, 'page': page, 'size': size})
     except Exception as e:
-        return json_response(code=500, msg=f'查询学习记录失败: {str(e)}')
+        return json_response(code=500, msg='查询学习记录失败，请稍后重试')

@@ -79,4 +79,4 @@ def login():
                     }, msg='登录成功')
             except Exception:
                 pass
-        return json_response(code=500, msg=f'登录失败: {str(e)}')
+        return json_response(code=500, msg='登录失败，请稍后重试')

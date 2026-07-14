@@ -16,10 +16,11 @@ def json_response(code=200, data=None, msg='success'):
 
 @word_bp.route('', methods=['GET'])
 def get_words():
-    """分页获取单词列表"""
+    """分页获取单词列表，支持 keyword 模糊搜索"""
     try:
         page = request.args.get('page', 1, type=int)
         size = request.args.get('size', 10, type=int)
+        keyword = request.args.get('keyword', '').strip()
 
         if page < 1:
             page = 1
@@ -30,31 +31,38 @@ def get_words():
 
         supabase = get_supabase()
 
-        count_result = supabase.table('words').select('id', count='exact').execute()
+        # 构建查询
+        query = supabase.table('words').select('*', count='exact')
+
+        if keyword:
+            # 模糊搜索：word 或 basic_meaning 包含关键词
+            query = query.or_(f"word.ilike.%{keyword}%,basic_meaning.ilike.%{keyword}%")
+
+        query = query.order('id', desc=False)
+
+        # 先查总数
+        count_result = query.limit(0).execute()
         total = count_result.count if count_result.count else 0
 
+        # 分页
         offset = (page - 1) * size
         if offset >= total and total > 0:
             offset = max(0, total - size)
             page = (offset // size) + 1
 
-        result = supabase.table('words') \
-            .select('*') \
-            .order('id', desc=False) \
-            .range(offset, offset + size - 1) \
-            .execute()
-
+        result = query.range(offset, offset + size - 1).execute()
         words = result.data if result.data else []
 
         return json_response(data={
             'list': words,
             'total': total,
             'page': page,
-            'size': size
+            'size': size,
+            'keyword': keyword if keyword else None
         })
 
     except Exception as e:
-        return json_response(code=500, msg=f'获取单词列表失败: {str(e)}')
+        return json_response(code=500, msg=f'获取单词列表失败，请稍后重试')
 
 
 @word_bp.route('/<int:word_id>', methods=['GET'])
@@ -128,4 +136,39 @@ def add_word():
         err_msg = str(e)
         if 'duplicate' in err_msg.lower() or 'unique' in err_msg.lower():
             return json_response(code=200, data=None, msg=f'单词"{word_text}"已存在，无需重复添加')
-        return json_response(code=500, msg=f'添加单词失败: {str(e)}')
+        return json_response(code=500, msg=f'添加单词失败，请稍后重试')
+
+
+@word_bp.route('/<int:word_id>/status', methods=['PUT'])
+def update_word_status(word_id):
+    """
+    更新单词复习状态
+    入参：{ "review_status": 0 或 1 }
+    review_status: 0=待复习, 1=已掌握
+    """
+    try:
+        body = request.get_json(silent=True)
+        if not body or 'review_status' not in body:
+            return json_response(code=400, msg='缺少必填参数 review_status')
+
+        review_status = int(body['review_status'])
+        if review_status not in (0, 1):
+            return json_response(code=400, msg='review_status 必须为 0 或 1')
+
+        supabase = get_supabase()
+
+        # 校验单词存在
+        check = supabase.table('words').select('id').eq('id', word_id).execute()
+        if not check.data:
+            return json_response(code=404, msg='单词不存在')
+
+        supabase.table('words').update({'review_status': review_status}).eq('id', word_id).execute()
+
+        status_text = '已掌握' if review_status == 1 else '待复习'
+        return json_response(data={'word_id': word_id, 'review_status': review_status}, msg=f'单词已标记为"{status_text}"')
+
+    except Exception as e:
+        err_msg = str(e)
+        if 'review_status' in err_msg.lower() and ('not exist' in err_msg.lower() or 'column' in err_msg.lower()):
+            return json_response(code=500, msg='数据库缺少 review_status 字段，请在 Supabase 执行: ALTER TABLE words ADD COLUMN IF NOT EXISTS review_status INTEGER DEFAULT 0;')
+        return json_response(code=500, msg=f'更新单词状态失败，请稍后重试')

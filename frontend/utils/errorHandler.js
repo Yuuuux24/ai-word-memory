@@ -1,11 +1,12 @@
 import { message } from 'antd';
 
 /**
- * 统一错误提示处理
- * 所有接口异常统一通过此方法弹窗展示
+ * 统一错误提示处理 — 所有接口异常统一通过此方法弹窗展示
  */
-export function showError(err, fallbackMsg = '操作失败') {
-  // 已存在 Ant Design message 提示则不再重复
+const FALLBACK_MSG = '操作失败，请稍后重试';
+const NETWORK_MSG = '无法连接后端服务，请确认 Flask 已启动';
+
+export function showError(err, fallbackMsg = FALLBACK_MSG) {
   if (typeof err === 'string') {
     message.error(err);
     return;
@@ -15,6 +16,10 @@ export function showError(err, fallbackMsg = '操作失败') {
     return;
   }
   if (err?.message) {
+    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+      message.error(NETWORK_MSG);
+      return;
+    }
     message.error(err.message);
     return;
   }
@@ -22,16 +27,14 @@ export function showError(err, fallbackMsg = '操作失败') {
   console.error('[ErrorHandler]', err);
 }
 
-/**
- * 统一成功提示
- */
 export function showSuccess(msg = '操作成功') {
   message.success(msg);
 }
 
-/**
- * 统一警告提示
- */
 export function showWarning(msg) {
   message.warning(msg);
+}
+
+export function showInfo(msg) {
+  message.info(msg);
 }

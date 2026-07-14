@@ -104,7 +104,6 @@ def ai_memo():
         return json_response(data=memo_data)
 
     except RuntimeError as e:
-        # Supabase 连接异常
-        return json_response(code=500, msg=f'数据库连接异常: {str(e)}')
+        return json_response(code=500, msg='数据库连接异常，请稍后重试')
     except Exception as e:
-        return json_response(code=500, msg=f'生成AI记忆素材失败: {str(e)}')
+        return json_response(code=500, msg='生成AI记忆素材失败，请稍后重试')

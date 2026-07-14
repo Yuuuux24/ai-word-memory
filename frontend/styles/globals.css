@@ -39,7 +39,7 @@ body {
   background: #b0b0b0;
 }
 
-/* ========== Ant Design 覆盖 ========== */
+/* ========== Ant Design 全局覆盖 ========== */
 .ant-card {
   border-radius: var(--radius) !important;
   box-shadow: var(--shadow) !important;
@@ -60,8 +60,18 @@ body {
   box-shadow: 0 4px 14px rgba(108, 124, 252, 0.4);
   transform: translateY(-1px);
 }
+.ant-btn-default {
+  border-radius: 8px;
+}
+.ant-input,
+.ant-picker {
+  border-radius: 8px;
+}
 .ant-modal-content {
   border-radius: 16px !important;
+}
+.ant-modal-header {
+  border-radius: 16px 16px 0 0 !important;
 }
 .ant-pagination {
   flex-wrap: wrap;
@@ -73,9 +83,15 @@ body {
 .ant-tag {
   border-radius: 6px;
 }
+.ant-divider {
+  border-color: #f0f0f0;
+}
+.ant-message-notice-content {
+  border-radius: 10px;
+}
 
 /* ========== 移动端适配 ========== */
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .ant-card {
     border-radius: 10px !important;
   }
@@ -83,11 +99,18 @@ body {
     max-width: calc(100vw - 32px) !important;
     margin: 16px auto !important;
   }
+  .ant-modal-body {
+    padding: 16px !important;
+  }
   .ant-pagination-item,
   .ant-pagination-prev,
   .ant-pagination-next {
-    min-width: 32px;
-    height: 32px;
-    line-height: 32px;
+    min-width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    font-size: 13px !important;
+  }
+  .ant-pagination-options {
+    margin-top: 8px;
   }
 }
