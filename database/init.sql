@@ -16,8 +16,12 @@ CREATE TABLE IF NOT EXISTS words (
 CREATE TABLE IF NOT EXISTS users (
     id          SERIAL PRIMARY KEY,
     username    VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL DEFAULT '',
     created_at  TIMESTAMP DEFAULT NOW()
 );
+
+-- 2b. 补充 password_hash 字段（向后兼容旧表）
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255) NOT NULL DEFAULT '';
 
 -- 3. 创建学习记录表
 CREATE TABLE IF NOT EXISTS study_record (

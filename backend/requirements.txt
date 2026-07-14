@@ -3,3 +3,4 @@ flask-cors
 supabase>=2.15
 python-dotenv
 websockets
+werkzeug
