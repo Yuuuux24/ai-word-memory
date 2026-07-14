@@ -8,6 +8,7 @@ const { useBreakpoint } = Grid;
 
 const menuItems = [
   { key: '/', label: '单词首页' },
+  { key: '/practice', label: '单词闯关' },
   { key: '/history', label: '背诵历史' },
   { key: '/login', label: '用户登录' },
 ];
