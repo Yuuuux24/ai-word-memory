@@ -462,25 +462,45 @@ export default function Practice() {
             <Text style={{ fontSize: 15, color: '#555' }}>{currentWord.basic_meaning}</Text>
           </div>
 
-          {/* 短语（占位） */}
-          <div style={{
-            marginBottom: 12, padding: '10px 14px',
-            background: '#fff', borderRadius: 8, border: '1px dashed #d9d9d9',
-          }}>
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              短语：<span style={{ color: '#bbb' }}>即将支持，敬请期待</span>
-            </Text>
-          </div>
+          {/* 短语 */}
+          {currentWord.phrase ? (
+            <div style={{
+              marginBottom: 12, padding: '10px 14px',
+              background: '#f6ffed', borderRadius: 8, border: '1px solid #d9f7be',
+            }}>
+              <Text strong style={{ fontSize: 13, color: '#389e0d' }}>短语：</Text>
+              <Text style={{ fontSize: 13, color: '#3d5a1e' }}>{currentWord.phrase}</Text>
+            </div>
+          ) : (
+            <div style={{
+              marginBottom: 12, padding: '10px 14px',
+              background: '#fff', borderRadius: 8, border: '1px dashed #d9d9d9',
+            }}>
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                短语：<span style={{ color: '#bbb' }}>暂无</span>
+              </Text>
+            </div>
+          )}
 
-          {/* 造句（占位） */}
-          <div style={{
-            marginBottom: 18, padding: '10px 14px',
-            background: '#fff', borderRadius: 8, border: '1px dashed #d9d9d9',
-          }}>
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              造句：<span style={{ color: '#bbb' }}>即将支持，敬请期待</span>
-            </Text>
-          </div>
+          {/* 造句 */}
+          {currentWord.sentence ? (
+            <div style={{
+              marginBottom: 18, padding: '10px 14px',
+              background: '#fafbff', borderRadius: 8, border: '1px solid #f0f2ff',
+            }}>
+              <Text strong style={{ fontSize: 13, color: '#4a54c9' }}>造句：</Text>
+              <Text style={{ fontSize: 13, color: '#555' }}>{currentWord.sentence}</Text>
+            </div>
+          ) : (
+            <div style={{
+              marginBottom: 18, padding: '10px 14px',
+              background: '#fff', borderRadius: 8, border: '1px dashed #d9d9d9',
+            }}>
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                造句：<span style={{ color: '#bbb' }}>暂无</span>
+              </Text>
+            </div>
+          )}
 
           {/* 下一题按钮 */}
           <Button
