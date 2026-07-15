@@ -4,3 +4,4 @@ supabase>=2.15
 python-dotenv
 websockets
 werkzeug
+cachetools>=5.0
