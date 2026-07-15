@@ -52,3 +52,24 @@ ON CONFLICT DO NOTHING;
 CREATE INDEX IF NOT EXISTS idx_study_record_user_id  ON study_record(user_id);
 CREATE INDEX IF NOT EXISTS idx_study_record_word_id  ON study_record(word_id);
 CREATE INDEX IF NOT EXISTS idx_words_created_at       ON words(created_at);
+
+-- =============================================
+-- 7. Row Level Security (RLS) 行级安全策略
+-- =============================================
+
+-- 7a. 启用 RLS
+ALTER TABLE words        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE study_record ENABLE ROW LEVEL SECURITY;
+
+-- 7b. words 表：匿名可读，写入仅 service_role 受控（后端通过 API 操作）
+CREATE POLICY words_select_anon ON words
+    FOR SELECT USING (true);
+
+-- 7c. users 表：匿名可读自身数据，写入仅后端受控
+CREATE POLICY users_select_anon ON users
+    FOR SELECT USING (true);
+
+-- 7d. study_record 表：匿名可读，写入仅后端受控
+CREATE POLICY study_record_select_anon ON study_record
+    FOR SELECT USING (true);
