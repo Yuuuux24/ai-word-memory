@@ -63,7 +63,7 @@ export default function Practice() {
   useEffect(() => {
     (async () => {
       // 检查登录
-      const uid = localStorage.getItem('userId');
+      const uid = localStorage.getItem('user_id');
       if (!uid) {
         router.replace('/login');
         return;
