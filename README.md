@@ -20,31 +20,44 @@
 
 ### 单词首页 `/`
 - 分页单词卡片展示（6/10/20 条可选）
+- 顶部搜索框支持单词/释义模糊检索，实时刷新
+- 每张卡片带复习状态切换按钮（待复习 / 已掌握）
 - 点击卡片弹出 AI 记忆素材弹窗
 - AI 弹窗分三区展示：词根解析、趣味记忆口诀、双语例句
-- AI 请求超时倒计时 + 重试按钮
+- AI 请求超时倒计时 (30s) + 重试按钮
 - 保存学习记录到个人中心
-- 分页切换防抖，避免重复请求
-- 骨架屏加载动画 / 空数据提示 / 网络错误提示
+- 分页切换 300ms 防抖，避免重复请求
+- 骨架屏加载动画 / 空数据提示 / 网络错误重试区域
 
 ### 用户登录 `/login`
-- 用户名登录，首次输入自动注册
-- 用户名实时长度校验（< 2 字符提示）
-- 登录状态持久化（localStorage）
+- 用户名 + 密码登录，支持登录 / 注册切换
+- 用户名实时长度校验（2~100 字符），密码长度校验（>4 位）
+- 密码使用哈希存储，后端验证
+- 登录成功 user_id 存入 localStorage，自动跳转首页
 - 已登录状态展示 + 退出登录
+- 未登录访问历史页 / 闯关页自动重定向登录页
 
 ### 背诵历史 `/history`
 - 分页展示用户全部学习记录
 - 日期筛选组件：按学习日期过滤记录
+- 复习状态筛选：仅查看待复习 / 已掌握记录
+- 点击「复习」重新打开 AI 记忆弹窗复习
+- 学习记录删除功能（含确认弹窗）
 - 分页切换防抖
-- 点击「复习」重新查看 AI 记忆素材
-- 复习弹窗同样三区展示
+
+### 单词闯关 `/practice`
+- 四选一答题模式，每题带音标展示
+- 答对变透明绿，答错红 + 绿高亮正确答案
+- 答对 3 次标记掌握，冷却 4~6 题后复现
+- 进度显示 N/M，每 10 个里程碑弹窗提示
+- 答完后浮现单词卡片复盘
 
 ### 全局特性
 - 全局渐变纯色护眼背景（无外部图片）
-- 移动端自适应适配
-- 统一错误 Toast 提示
+- 移动端自适应适配（卡片铺满、分页换行、汉堡菜单）
+- 统一错误 Toast 提示（showError / showSuccess / showWarning）
 - `.env` / `.env.local` 密钥文件已被 `.gitignore` 拦截
+- 统一返回格式 `{code, data, msg}`
 
 ---
 
@@ -128,6 +141,7 @@ npm run dev
 | word | VARCHAR(100) | 单词 |
 | phonetic | VARCHAR(100) | 音标 |
 | basic_meaning | TEXT | 中文释义 |
+| review_status | INTEGER | 复习状态（0=待复习，1=已掌握） |
 | created_at | TIMESTAMP | 创建时间 |
 
 #### users（用户表）
@@ -136,6 +150,7 @@ npm run dev
 |------|------|------|
 | id | SERIAL | 主键，自增 |
 | username | VARCHAR(100) | 用户名（唯一） |
+| password_hash | VARCHAR(255) | 密码哈希 |
 | created_at | TIMESTAMP | 创建时间 |
 
 #### study_record（学习记录表）
@@ -145,14 +160,14 @@ npm run dev
 | id | SERIAL | 主键，自增 |
 | user_id | INTEGER | 用户 ID（外键 → users） |
 | word_id | INTEGER | 单词 ID（外键 → words） |
-| memory_content | TEXT | AI 记忆内容（可选） |
 | study_date | TIMESTAMP | 学习日期 |
 
 ### RLS 权限说明
 
-生产环境建议在 Supabase Dashboard 中配置 Row Level Security (RLS)：
-- 开发阶段可暂时关闭 RLS 或使用 `service_role` 密钥
-- 上线时为 `users` 和 `study_record` 启用 RLS，确保用户仅访问自身数据
+已在 `init.sql` 中配置完整的 Row Level Security (RLS) 策略：
+- 所有表已启用 RLS
+- 匿名用户可读（SELECT），写入操作由后端 `service_role` 控制
+- 执行 `init.sql` 即可自动配置
 
 ---
 
@@ -160,13 +175,17 @@ npm run dev
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/words?page=&size=` | 分页单词列表 |
+| GET | `/api/words?page=&size=&keyword=` | 分页单词列表（支持模糊搜索） |
 | GET | `/api/words/:id` | 单词详情 |
 | POST | `/api/words` | 新增单词（含查重） |
+| PUT | `/api/words/:id/status` | 更新单词复习状态 |
+| DELETE | `/api/words/:id` | 删除单词 |
 | POST | `/api/ai/memo` | AI 生成记忆素材 |
-| POST | `/api/user/login` | 用户登录/自动注册 |
-| POST | `/api/study/add` | 新增/更新学习记录 |
-| GET | `/api/study/list?user_id=&page=&size=&date=` | 分页查询学习记录（含日期筛选） |
+| POST | `/api/user/register` | 用户注册 |
+| POST | `/api/user/login` | 用户登录 |
+| POST | `/api/study/add` | 新增学习记录 |
+| GET | `/api/study/list?user_id=&page=&size=&date=&review_status=` | 分页查询学习记录（含日期/状态筛选） |
+| DELETE | `/api/study/:id` | 删除学习记录 |
 
 ---
 
@@ -182,13 +201,18 @@ npm run dev
 | `refactor:` | 代码重构 |
 | `chore:` | 构建/工具配置 |
 
-### 本项目提交记录
+### 本项目提交记录（最新）
 
 ```
-7079398 feat: 全站简约UI美化，配置渐变纯色护眼背景，完成移动端自适应，优化弹窗与占位样式
-fe100b3 fix: 优化交互容错，新增分页防抖、单词查重、日期筛选、接口超时重试与统一错误提示
-[NEXT]  docs: 编写完整项目README说明文档，包含配置、启动、功能介绍
-[NEXT]  docs: 归档全项目AI开发Prompt，整理实训开发日志文档
+810566c feat: 新增单词闯关页面（四选一+答对3次掌握+冷却复现+里程碑提示）
+e5bf757 feat: 登录页面增加密码验证与注册切换功能
+f54c23b feat: 新增 404 自定义错误页面
+33a8cb1 fix: 修复废弃API（bodyStyle→styles）、清理未使用变量、补充缺失import
+e059de7 feat: 新增单词删除接口 + 学习记录删除功能（前端确认弹窗）
+89b4474 refactor: 抽取公共 AI 记忆素材弹窗组件 AIMemoModal
+5c3c349 perf: 修复学习记录分页性能 + DELETE 接口
+ee0b56e feat: 拓展新增单词模糊搜索、单词掌握标记功能，支持复习状态筛选
+df84c7d fix: 全流程验收修复遗留细微bug，统一全站提示文案与视觉细节
 ```
 
 ---
@@ -201,6 +225,7 @@ ai-word-memory/
 │   ├── app.py               # 应用入口，注册蓝图
 │   ├── config.py            # 配置管理
 │   ├── supabase_client.py   # Supabase 客户端
+│   ├── seed_kaoyan_words.py # 考研词汇批量导入脚本
 │   ├── requirements.txt     # Python 依赖
 │   ├── .env                 # 环境变量（需自行创建，不提交）
 │   ├── .env.example         # 环境变量模板
@@ -214,19 +239,26 @@ ai-word-memory/
 │   │   ├── index.js         # 首页
 │   │   ├── login.js         # 登录页
 │   │   ├── history.js       # 背诵历史页
+│   │   ├── practice.js      # 单词闯关页
+│   │   ├── 404.js           # 自定义 404 页面
 │   │   └── _app.js          # 全局布局包裹
 │   ├── components/
-│   │   └── Layout.js        # 全局布局组件（导航栏 + 页面容器）
+│   │   ├── Layout.js        # 全局布局组件（导航栏 + 页面容器）
+│   │   └── AIMemoModal.js   # AI 记忆素材弹窗公共组件
 │   ├── utils/
 │   │   └── errorHandler.js  # 统一错误提示工具
 │   ├── styles/
 │   │   └── globals.css      # 全局样式
+│   ├── public/favicon/      # 网站图标
 │   ├── package.json
+│   ├── .env.local.example   # 前端环境变量模板
 │   ├── .env.local           # 环境变量（需自行创建，不提交）
 │   └── next.config.js
 ├── database/
 │   └── init.sql             # 数据库初始化 SQL
-├── prompt-record/           # AI 开发 Prompt 截图归档
+├── prompt-record/           # AI 开发 Prompt 截图归档（Day1~Day5）
+├── prompt_log.md            # 全部 Prompt 归档文档
+├── task_record.md           # 每日开发任务记录
 ├── .gitignore
 └── README.md
 ```
@@ -239,10 +271,11 @@ ai-word-memory/
 
 | 页面 | 说明 |
 |------|------|
-| ![首页](screenshots/home.png) | 单词卡片首页（渐变背景） |
+| ![首页](screenshots/home.png) | 单词卡片首页（渐变背景 + 搜索 + 复习标记） |
 | ![AI弹窗](screenshots/modal.png) | AI 记忆素材弹窗（三区展示） |
-| ![登录](screenshots/login.png) | 用户登录/注册页 |
-| ![历史](screenshots/history.png) | 背诵历史页（日期筛选） |
+| ![登录](screenshots/login.png) | 用户登录/注册页（密码验证） |
+| ![历史](screenshots/history.png) | 背诵历史页（日期筛选 + 状态筛选） |
+| ![闯关](screenshots/practice.png) | 单词闯关页（四选一答题） |
 
 ---
 
