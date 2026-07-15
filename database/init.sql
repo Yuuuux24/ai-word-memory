@@ -34,6 +34,13 @@ CREATE TABLE IF NOT EXISTS study_record (
 -- 4. 添加 review_status 字段（单词掌握状态：0=待复习，1=已掌握）
 ALTER TABLE words ADD COLUMN IF NOT EXISTS review_status INTEGER DEFAULT 0;
 
+-- 4b. 添加 AI 记忆素材字段
+ALTER TABLE words ADD COLUMN IF NOT EXISTS root_analysis TEXT DEFAULT '';
+ALTER TABLE words ADD COLUMN IF NOT EXISTS mnemonic      TEXT DEFAULT '';
+ALTER TABLE words ADD COLUMN IF NOT EXISTS extra_example TEXT DEFAULT '';
+ALTER TABLE words ADD COLUMN IF NOT EXISTS phrase        TEXT DEFAULT '';
+ALTER TABLE words ADD COLUMN IF NOT EXISTS sentence      TEXT DEFAULT '';
+
 -- 5. 插入 10 条测试单词数据
 INSERT INTO words (word, phonetic, basic_meaning) VALUES
 ('abandon',      '/əˈbændən/',    'v. 抛弃，放弃'),
