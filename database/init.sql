@@ -48,19 +48,32 @@ INSERT INTO words (word, phonetic, basic_meaning) VALUES
 ('journey',      '/ˈdʒɜːrni/',    'n. 旅程，旅行')
 ON CONFLICT DO NOTHING;
 
+-- 5b. 闯关进度表（用户-单词粒度，记录答对次数和冷却）
+CREATE TABLE IF NOT EXISTS practice_progress (
+    id                  SERIAL PRIMARY KEY,
+    user_id             INTEGER REFERENCES users(id),
+    word_id             INTEGER REFERENCES words(id),
+    correct_count       INTEGER DEFAULT 0,
+    cooldown_remaining  INTEGER DEFAULT 0,
+    updated_at          TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, word_id)
+);
+
 -- 6. 创建索引
 CREATE INDEX IF NOT EXISTS idx_study_record_user_id  ON study_record(user_id);
 CREATE INDEX IF NOT EXISTS idx_study_record_word_id  ON study_record(word_id);
 CREATE INDEX IF NOT EXISTS idx_words_created_at       ON words(created_at);
+CREATE INDEX IF NOT EXISTS idx_practice_progress_uid   ON practice_progress(user_id);
 
 -- =============================================
 -- 7. Row Level Security (RLS) 行级安全策略
 -- =============================================
 
 -- 7a. 启用 RLS
-ALTER TABLE words        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE users        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE study_record ENABLE ROW LEVEL SECURITY;
+ALTER TABLE words             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE study_record      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE practice_progress ENABLE ROW LEVEL SECURITY;
 
 -- 7b. words 表：匿名可读，写入仅 service_role 受控（后端通过 API 操作）
 CREATE POLICY words_select_anon ON words
@@ -72,4 +85,8 @@ CREATE POLICY users_select_anon ON users
 
 -- 7d. study_record 表：匿名可读，写入仅后端受控
 CREATE POLICY study_record_select_anon ON study_record
+    FOR SELECT USING (true);
+
+-- 7e. practice_progress 表：匿名可读，写入仅后端受控
+CREATE POLICY practice_progress_select_anon ON practice_progress
     FOR SELECT USING (true);

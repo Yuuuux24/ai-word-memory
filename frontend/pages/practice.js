@@ -32,6 +32,9 @@ function shuffleOptions(correctMeaning, wrongMeanings) {
 export default function Practice() {
   const router = useRouter();
 
+  // -- 用户身份 --
+  const userIdRef = useRef(null);
+
   // -- 单词数据 --
   const [allWords, setAllWords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,20 +59,49 @@ export default function Practice() {
   const [milestoneOpen, setMilestoneOpen] = useState(false);
   const [milestoneMsg, setMilestoneMsg] = useState('');
 
-  // ========== 加载全部单词 ==========
+  // ========== 加载单词 + 恢复进度 ==========
   useEffect(() => {
     (async () => {
+      // 检查登录
+      const uid = localStorage.getItem('userId');
+      if (!uid) {
+        router.replace('/login');
+        return;
+      }
+      userIdRef.current = parseInt(uid, 10);
+
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/api/words?page=1&size=9999`);
+        const res = await fetch(`${API_BASE}/api/words?page=1&size=10`);
         const json = await res.json();
         if (json.code === 200 && json.data?.list?.length) {
           const words = json.data.list;
           setAllWords(words);
+
+          // 从数据库加载进度
           const c = {}, d = {};
           words.forEach(w => { c[w.id] = 0; d[w.id] = 0; });
+
+          try {
+            const pgRes = await fetch(`${API_BASE}/api/practice/load?user_id=${userIdRef.current}`);
+            const pgJson = await pgRes.json();
+            if (pgJson.code === 200 && pgJson.data?.progress) {
+              const saved = pgJson.data.progress;
+              Object.keys(saved).forEach(wid => {
+                const widNum = parseInt(wid);
+                c[widNum] = saved[wid].correct_count || 0;
+                d[widNum] = saved[wid].cooldown_remaining || 0;
+              });
+            }
+          } catch (_) {
+            // 加载进度失败不影响游戏，使用默认值
+          }
+
           correctRef.current = c;
           cooldownRef.current = d;
+          const mastered = Object.values(c).filter(v => v >= REQUIRED_CORRECT).length;
+          setTotalMastered(mastered);
+          lastMilestoneRef.current = mastered;
         } else {
           showError(json.msg || '获取单词列表失败');
         }
@@ -140,6 +172,24 @@ export default function Practice() {
     }
   }, [loading, allWords, pickNext]);
 
+  // ========== 保存单条进度到数据库 ==========
+  const saveProgress = useCallback((wordId) => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+    const cnts = correctRef.current;
+    const cds = cooldownRef.current;
+    fetch(`${API_BASE}/api/practice/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: uid,
+        word_id: wordId,
+        correct_count: cnts[wordId] || 0,
+        cooldown_remaining: cds[wordId] || 0,
+      }),
+    }).catch(() => {});
+  }, []);
+
   // ========== 点击选项 ==========
   const handleOptionClick = useCallback((opt, idx) => {
     if (showResult || !currentWord) return;
@@ -163,6 +213,9 @@ export default function Practice() {
     correctRef.current = cnts;
     cooldownRef.current = cds;
 
+    // 保存到数据库
+    saveProgress(currentWord.id);
+
     // 重新计算掌握数
     const mastered = Object.values(cnts).filter(v => v >= REQUIRED_CORRECT).length;
     setTotalMastered(mastered);
@@ -173,7 +226,7 @@ export default function Practice() {
       setMilestoneMsg(`已掌握 ${mastered} 个单词，继续加油！`);
       setMilestoneOpen(true);
     }
-  }, [showResult, currentWord]);
+  }, [showResult, currentWord, saveProgress]);
 
   // ========== 下一题 ==========
   const handleNext = useCallback(() => pickNext(), [pickNext]);
@@ -186,6 +239,24 @@ export default function Practice() {
     cooldownRef.current = d;
     setTotalMastered(0);
     lastMilestoneRef.current = 0;
+
+    // 清空数据库进度
+    const uid = userIdRef.current;
+    if (uid) {
+      allWords.forEach(w => {
+        fetch(`${API_BASE}/api/practice/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: uid,
+            word_id: w.id,
+            correct_count: 0,
+            cooldown_remaining: 0,
+          }),
+        }).catch(() => {});
+      });
+    }
+
     pickNext();
   }, [allWords, pickNext]);
 
