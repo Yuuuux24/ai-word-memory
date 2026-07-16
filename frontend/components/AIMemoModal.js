@@ -2,6 +2,7 @@ import { Modal, Spin, Typography, Button, Space, Divider, Progress, Select, Tag 
 import { ReloadOutlined, SaveOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { showError } from '@/utils/errorHandler';
+import { authHeaders } from '@/utils/auth';
 
 const { Text } = Typography;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
@@ -28,7 +29,6 @@ export default function AIMemoModal({ open, word, onClose, showSaveBtn = true, o
   const [timeout, setTimeout_] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [style, setStyle] = useState('simple');
-  const [fromCache, setFromCache] = useState(false);
 
   const timerRef = useRef(null);
   const countdownRef = useRef(null);
@@ -49,7 +49,6 @@ export default function AIMemoModal({ open, word, onClose, showSaveBtn = true, o
     setLoading(true);
     setData(null);
     setTimeout_(false);
-    setFromCache(false);
     setCountdown(0);
     cleanup();
 
@@ -72,7 +71,7 @@ export default function AIMemoModal({ open, word, onClose, showSaveBtn = true, o
 
     fetch(`${API_BASE}/api/ai/generate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({ word_id: wordId, style: styleOpt }),
       signal: abortRef.current.signal,
     })
@@ -82,7 +81,6 @@ export default function AIMemoModal({ open, word, onClose, showSaveBtn = true, o
         clearInterval(countdownRef.current);
         if (json.code === 200) {
           setData(json.data);
-          setFromCache(!!json.data.from_cache);
         } else {
           showError(json.msg || 'AI 生成失败，请稍后重试');
           setData(json.data || null); // 兜底数据
@@ -104,16 +102,15 @@ export default function AIMemoModal({ open, word, onClose, showSaveBtn = true, o
     requestMemo(word.id, style);
   }, [open, word, style, requestMemo]);
 
-  // 保存学习记录
+  // 保存学习记录（使用 JWT 鉴权，无需传 user_id）
   const handleSave = useCallback(async () => {
-    const userId = localStorage.getItem('user_id');
-    if (!userId || !word) return;
+    if (!word) return;
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE}/api/study/add`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: Number(userId), word_id: word.id }),
+        headers: authHeaders(),
+        body: JSON.stringify({ word_id: word.id }),
       });
       const json = await res.json();
       if (json.code === 200) {
@@ -209,11 +206,6 @@ export default function AIMemoModal({ open, word, onClose, showSaveBtn = true, o
         </div>
       ) : data ? (
         <div style={{ lineHeight: 1.8 }}>
-          {/* 缓存提示 */}
-          {fromCache && (
-            <Tag color="blue" style={{ marginBottom: 12 }}>已缓存</Tag>
-          )}
-
           {/* 词根解析 */}
           <div style={{ marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>

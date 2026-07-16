@@ -6,6 +6,7 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { showError } from '@/utils/errorHandler';
+import { getToken, getUserId, authHeaders } from '@/utils/auth';
 
 const { Title, Text } = Typography;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
@@ -62,13 +63,13 @@ export default function Practice() {
   // ========== 加载单词 + 恢复进度 ==========
   useEffect(() => {
     (async () => {
-      // 检查登录
-      const uid = localStorage.getItem('user_id');
-      if (!uid) {
+      // 检查登录（使用 JWT token）
+      const uid = getUserId();
+      if (!uid || !getToken()) {
         router.replace('/login');
         return;
       }
-      userIdRef.current = parseInt(uid, 10);
+      userIdRef.current = uid;
 
       setLoading(true);
       try {
@@ -83,7 +84,9 @@ export default function Practice() {
           words.forEach(w => { c[w.id] = 0; d[w.id] = 0; });
 
           try {
-            const pgRes = await fetch(`${API_BASE}/api/practice/load?user_id=${userIdRef.current}`);
+            const pgRes = await fetch(`${API_BASE}/api/practice/load`, {
+              headers: authHeaders(),
+            });
             const pgJson = await pgRes.json();
             if (pgJson.code === 200 && pgJson.data?.progress) {
               const saved = pgJson.data.progress;
@@ -172,17 +175,14 @@ export default function Practice() {
     }
   }, [loading, allWords, pickNext]);
 
-  // ========== 保存单条进度到数据库 ==========
+  // ========== 保存单条进度到数据库（使用 JWT） ==========
   const saveProgress = useCallback((wordId) => {
-    const uid = userIdRef.current;
-    if (!uid) return;
     const cnts = correctRef.current;
     const cds = cooldownRef.current;
     fetch(`${API_BASE}/api/practice/save`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({
-        user_id: uid,
         word_id: wordId,
         correct_count: cnts[wordId] || 0,
         cooldown_remaining: cds[wordId] || 0,
@@ -231,7 +231,7 @@ export default function Practice() {
   // ========== 下一题 ==========
   const handleNext = useCallback(() => pickNext(), [pickNext]);
 
-  // ========== 重新开始 ==========
+  // ========== 重新开始（批量重置，单次请求） ==========
   const handleRestart = useCallback(() => {
     const c = {}, d = {};
     allWords.forEach(w => { c[w.id] = 0; d[w.id] = 0; });
@@ -240,22 +240,12 @@ export default function Practice() {
     setTotalMastered(0);
     lastMilestoneRef.current = 0;
 
-    // 清空数据库进度
-    const uid = userIdRef.current;
-    if (uid) {
-      allWords.forEach(w => {
-        fetch(`${API_BASE}/api/practice/save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: uid,
-            word_id: w.id,
-            correct_count: 0,
-            cooldown_remaining: 0,
-          }),
-        }).catch(() => {});
-      });
-    }
+    // 使用批量重置接口，一次请求清除全部进度
+    fetch(`${API_BASE}/api/practice/reset`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ word_ids: allWords.map(w => w.id) }),
+    }).catch(() => {});
 
     pickNext();
   }, [allWords, pickNext]);

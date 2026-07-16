@@ -3,6 +3,7 @@ import { Card, Input, Button, Typography, Space } from 'antd';
 import { UserOutlined, LoginOutlined, LockOutlined, CheckCircleFilled, UserAddOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showWarning } from '@/utils/errorHandler';
+import { setAuthData, clearAuthData, getToken, getUsername } from '@/utils/auth';
 
 const { Title, Text } = Typography;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
@@ -16,9 +17,9 @@ export default function Login() {
   const [isRegister, setIsRegister] = useState(false);
 
   useEffect(() => {
-    const savedUserId = localStorage.getItem('user_id');
-    const savedUsername = localStorage.getItem('username');
-    if (savedUserId && savedUsername) {
+    const token = getToken();
+    const savedUsername = getUsername();
+    if (token && savedUsername) {
       setUsername(savedUsername);
       setLoggedIn(true);
     }
@@ -67,8 +68,8 @@ export default function Login() {
       const json = await res.json();
 
       if (json.code === 200 && json.data) {
-        localStorage.setItem('user_id', json.data.id);
-        localStorage.setItem('username', trimmedUser);
+        // 使用 JWT token 存储认证信息
+        setAuthData(json.data.token, json.data.id, trimmedUser);
         showSuccess(json.msg || (isRegister ? '注册成功' : '登录成功'));
         setLoggedIn(true);
         setTimeout(() => router.push('/'), 800);
@@ -83,8 +84,7 @@ export default function Login() {
   }, [username, password, isRegister, router]);
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('username');
+    clearAuthData();
     setUsername('');
     setPassword('');
     setLoggedIn(false);
@@ -132,7 +132,7 @@ export default function Login() {
                 justifyContent: 'center', gap: 8,
               }}>
                 <CheckCircleFilled style={{ color: '#52c41a', fontSize: 18 }} />
-                <Text strong style={{ color: '#389e0d' }}>已登录：{localStorage.getItem('username')}</Text>
+                <Text strong style={{ color: '#389e0d' }}>已登录：{getUsername()}</Text>
               </div>
               <Space>
                 <Button danger onClick={handleLogout}>退出登录</Button>

@@ -6,6 +6,7 @@ import {
 import { HistoryOutlined, EyeOutlined, CalendarOutlined, FilterOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { showError, showWarning, showInfo } from '@/utils/errorHandler';
+import { getToken, getUserId, authHeaders } from '@/utils/auth';
 import AIMemoModal from '@/components/AIMemoModal';
 import dayjs from 'dayjs';
 
@@ -29,22 +30,22 @@ export default function History() {
   const [reviewWord, setReviewWord] = useState(null);
 
   useEffect(() => {
-    const uid = localStorage.getItem('user_id');
-    if (!uid) {
+    const uid = getUserId();
+    if (!uid || !getToken()) {
       showInfo('请先登录再查看背诵历史');
       setTimeout(() => router.push('/login'), 800);
       return;
     }
-    setUserId(Number(uid));
+    setUserId(uid);
   }, [router]);
 
   const fetchRecords = useCallback(async (p, s, date, rs) => {
     setLoading(true);
     try {
-      let url = `${API_BASE}/api/study/list?user_id=${userId}&page=${p}&size=${s}`;
+      let url = `${API_BASE}/api/study/list?page=${p}&size=${s}`;
       if (date) url += `&date=${dayjs(date).format('YYYY-MM-DD')}`;
       if (rs !== undefined && rs !== null) url += `&review_status=${rs}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { headers: authHeaders() });
       const json = await res.json();
       if (json.code === 200 && json.data) {
         setRecords(json.data.list || []);
@@ -94,7 +95,10 @@ export default function History() {
 
   const handleDeleteRecord = useCallback(async (recordId) => {
     try {
-      const res = await fetch(`${API_BASE}/api/study/${recordId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/api/study/${recordId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
       const json = await res.json();
       if (json.code === 200) {
         message.success(json.msg || '记录已删除');
