@@ -3,43 +3,40 @@
 study_record: id, user_id, word_id, memory_content, study_date
 words: id, word, phonetic, basic_meaning, created_at, review_status
 """
-from flask import Blueprint, jsonify, request
+import logging
+from flask import Blueprint, request
 from supabase_client import get_supabase
 from datetime import datetime, timezone
+from utils.response import json_response
+from utils.auth import jwt_required
+
+logger = logging.getLogger(__name__)
 
 record_bp = Blueprint('record', __name__, url_prefix='/api/study')
 
 
-def json_response(code=200, data=None, msg='success'):
-    return jsonify({'code': code, 'data': data, 'msg': msg})
-
-
 @record_bp.route('/add', methods=['POST'])
+@jwt_required
 def add_study_record():
-    """新增学习记录"""
+    """新增学习记录（需 JWT 鉴权）"""
+    from flask import g
     try:
         body = request.get_json(silent=True)
         if not body:
             return json_response(code=400, msg='请求体不能为空')
 
-        user_id = body.get('user_id')
+        user_id = g.user_id
         word_id = body.get('word_id')
 
-        if not user_id or not word_id:
-            return json_response(code=400, msg='缺少必填参数 user_id 或 word_id')
+        if not word_id:
+            return json_response(code=400, msg='缺少必填参数 word_id')
 
         try:
-            user_id = int(user_id)
             word_id = int(word_id)
         except (ValueError, TypeError):
-            return json_response(code=400, msg='user_id 和 word_id 必须为整数')
+            return json_response(code=400, msg='word_id 必须为整数')
 
         supabase = get_supabase()
-
-        # 校验用户存在
-        ur = supabase.table('users').select('id').eq('id', user_id).execute()
-        if not ur.data:
-            return json_response(code=404, msg=f'用户 ID {user_id} 不存在')
 
         # 校验单词存在
         wr = supabase.table('words').select('id,word').eq('id', word_id).execute()
@@ -59,16 +56,17 @@ def add_study_record():
             }).execute()
             return json_response(msg='学习记录保存成功')
     except Exception:
+        logger.exception('Failed to save study record')
         return json_response(code=500, msg='保存学习记录失败，请稍后重试')
 
 
 @record_bp.route('/list', methods=['GET'])
+@jwt_required
 def get_study_list():
-    """分页查询用户学习记录，关联单词信息，支持日期筛选和 review_status 筛选"""
+    """分页查询用户学习记录，关联单词信息，支持日期筛选和 review_status 筛选（需 JWT 鉴权）"""
+    from flask import g
     try:
-        user_id = request.args.get('user_id', type=int)
-        if not user_id:
-            return json_response(code=400, msg='缺少必填参数 user_id')
+        user_id = g.user_id
 
         page = request.args.get('page', 1, type=int)
         size = request.args.get('size', 10, type=int)
@@ -93,9 +91,7 @@ def get_study_list():
         count_result = count_query.limit(0).execute()
         raw_total = count_result.count if count_result.count else 0
 
-        # 第二步：分页拉取（数据库层分页，减少网络传输）
-        # 拉取比当前页更多的数据，用于 Python 侧 review_status 过滤后仍够分
-        fetch_size = raw_total if review_status is not None else min(size, raw_total)
+        # 第二步：拉取数据
         data_query = supabase.table('study_record').select(select_fields).eq('user_id', user_id)
         if filter_date:
             data_query = data_query.gte('study_date', filter_date + 'T00:00:00').lt('study_date', filter_date + 'T23:59:59')
@@ -135,32 +131,43 @@ def get_study_list():
                 'study_date': r.get('study_date'),
             })
 
-        total = len(records)
-
-        # 分页切片（review_status 过滤时在 Python 侧切片）
+        # 修复：total 应根据是否有 review_status 过滤区分计算
         if review_status is not None:
+            # Python 侧过滤后，total 为过滤后的总数
+            total = len(records)
+            # 分页切片
             offset = (page - 1) * size
             if offset >= total and total > 0:
                 offset = max(0, total - size)
                 page = (offset // size) + 1
             records = records[offset:offset + size]
+        else:
+            # 数据库层分页，total 直接使用 raw_total
+            total = raw_total
 
         return json_response(data={'list': records, 'total': total, 'page': page, 'size': size})
     except Exception:
+        logger.exception('Failed to query study records')
         return json_response(code=500, msg='查询学习记录失败，请稍后重试')
 
 
 @record_bp.route('/<int:record_id>', methods=['DELETE'])
+@jwt_required
 def delete_study_record(record_id):
-    """删除学习记录"""
+    """删除学习记录（需 JWT 鉴权）"""
+    from flask import g
     try:
         supabase = get_supabase()
 
-        check = supabase.table('study_record').select('id').eq('id', record_id).execute()
+        # 校验记录存在且属于当前用户
+        check = supabase.table('study_record').select('id,user_id').eq('id', record_id).execute()
         if not check.data:
             return json_response(code=404, msg='学习记录不存在')
+        if check.data[0]['user_id'] != g.user_id:
+            return json_response(code=403, msg='无权删除他人的学习记录')
 
         supabase.table('study_record').delete().eq('id', record_id).execute()
         return json_response(msg='学习记录已删除')
     except Exception:
+        logger.exception('Failed to delete study record')
         return json_response(code=500, msg='删除学习记录失败，请稍后重试')

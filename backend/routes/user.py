@@ -1,18 +1,19 @@
 """
 用户注册/登录接口路由
-- POST /api/user/register  用户注册（需用户名+密码）
-- POST /api/user/login     用户登录（需用户名+密码）
+- POST /api/user/register  用户注册（需用户名+密码，返回 JWT token）
+- POST /api/user/login     用户登录（需用户名+密码，返回 JWT token）
+- GET  /api/user/me        获取当前登录用户信息（需 JWT 鉴权）
 """
-from flask import Blueprint, jsonify, request
+import logging
+from flask import Blueprint, request, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from supabase_client import get_supabase
+from utils.response import json_response
+from utils.auth import create_token, jwt_required
+
+logger = logging.getLogger(__name__)
 
 user_bp = Blueprint('user', __name__, url_prefix='/api/user')
-
-
-def json_response(code=200, data=None, msg='success'):
-    """统一 JSON 返回结构"""
-    return jsonify({'code': code, 'data': data, 'msg': msg})
 
 
 @user_bp.route('/register', methods=['POST'])
@@ -63,9 +64,13 @@ def register():
             return json_response(code=500, msg='注册失败，请稍后重试')
 
         new_user = insert_result.data[0]
+        user_id = new_user['id']
+        username_str = new_user['username']
+        token = create_token(user_id, username_str)
         return json_response(data={
-            'id': new_user['id'],
-            'username': new_user['username'],
+            'id': user_id,
+            'username': username_str,
+            'token': token,
             'created_at': new_user.get('created_at')
         }, msg='注册成功，欢迎使用')
 
@@ -73,6 +78,7 @@ def register():
         err_msg = str(e)
         if 'duplicate' in err_msg.lower() or 'unique' in err_msg.lower():
             return json_response(code=409, msg='用户名已被注册')
+        logger.exception('User registration failed')
         return json_response(code=500, msg='注册失败，请稍后重试')
 
 
@@ -114,11 +120,24 @@ def login():
         if not stored_hash or not check_password_hash(stored_hash, password):
             return json_response(code=401, msg='密码错误')
 
+        token = create_token(user['id'], user['username'])
         return json_response(data={
             'id': user['id'],
             'username': user['username'],
+            'token': token,
             'created_at': user.get('created_at')
         }, msg='登录成功')
 
     except Exception:
+        logger.exception('User login failed')
         return json_response(code=500, msg='登录失败，请稍后重试')
+
+
+@user_bp.route('/me', methods=['GET'])
+@jwt_required
+def get_me():
+    """获取当前登录用户信息（需 JWT 鉴权）"""
+    return json_response(data={
+        'user_id': g.user_id,
+        'username': g.username,
+    })

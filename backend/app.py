@@ -2,7 +2,9 @@
 Flask 应用入口
 - 全局注册 CORS 跨域
 - 注册所有路由蓝图
+- 配置全链路日志
 """
+import logging
 from flask import Flask
 from flask_cors import CORS
 
@@ -14,8 +16,23 @@ from routes.user import user_bp
 from routes.practice import practice_bp
 
 
+def setup_logging():
+    """配置全链路日志"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+    )
+    # 抑制第三方库的 DEBUG 日志
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
+    logging.getLogger('httpx').setLevel(logging.WARNING)
+
+
 def create_app():
     """创建并配置 Flask 应用"""
+    setup_logging()
+    logger = logging.getLogger(__name__)
+
     app = Flask(__name__)
 
     # 全局开启 CORS 跨域，适配前端 3000 端口
@@ -33,6 +50,7 @@ def create_app():
     def index():
         return {'message': 'AI Word Memory API is running', 'status': 'ok'}
 
+    logger.info('Flask application initialized successfully')
     return app
 
 

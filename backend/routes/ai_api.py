@@ -1,12 +1,17 @@
 """
 AI 记忆素材路由
-- POST /api/ai/memo      从数据库读取预生成记忆素材
+- POST /api/ai/memo      从数据库读取预生成记忆素材（实际调用 generate_word_memo）
 - POST /api/ai/generate   从数据库读取预生成素材（按 style 返回不同风格，纯本地，零API费用）
 """
 import json as _json
-from flask import Blueprint, jsonify, request
+import logging
+from flask import Blueprint, request
 
 from supabase_client import get_supabase
+from utils.response import json_response
+from utils.auth import optional_auth
+
+logger = logging.getLogger(__name__)
 
 # 创建蓝图，URL 前缀为 /api/ai
 ai_api_bp = Blueprint('ai_api', __name__, url_prefix='/api/ai')
@@ -17,11 +22,6 @@ STYLE_FALLBACK = {
     'story':    ['story', 'mnemonic', 'simple'],
     'mnemonic': ['mnemonic', 'simple', 'story'],
 }
-
-
-# ==================== 统一返回 ====================
-def json_response(code=200, data=None, msg='success'):
-    return jsonify({'code': code, 'data': data, 'msg': msg})
 
 
 def _parse_mnemonic(raw, word, style):
@@ -72,10 +72,13 @@ def _read_word_from_db(word_id, style='simple'):
     }
 
 
-# ==================== 路由：从数据库读取 ====================
-@ai_api_bp.route('/memo', methods=['POST'])
-def ai_memo():
-    """从数据库读取预生成记忆素材，支持 ?style= 参数"""
+# ==================== 核心逻辑（两个路由复用） ====================
+def _fetch_memo_from_db():
+    """
+    从数据库读取预生成记忆素材（纯本地，无需调用大模型）
+    入参：word_id(必填) + style(可选，返回对应风格)
+    返回 Flask Response
+    """
     try:
         body = request.get_json(silent=True)
         if not body or 'word_id' not in body:
@@ -98,43 +101,25 @@ def ai_memo():
         return json_response(data=word)
 
     except RuntimeError:
+        logger.error('Database connection error in _fetch_memo_from_db')
         return json_response(code=500, msg='数据库连接异常，请稍后重试')
     except Exception:
+        logger.exception('Unexpected error in _fetch_memo_from_db')
         return json_response(code=500, msg='获取记忆素材失败，请稍后重试')
 
 
-# ==================== 路由：生成素材（读数据库预生成内容） ====================
+@ai_api_bp.route('/memo', methods=['POST'])
+@optional_auth
+def ai_memo():
+    """从数据库读取预生成记忆素材（兼容旧接口，实际调用 /generate 相同逻辑）"""
+    return _fetch_memo_from_db()
+
+
 @ai_api_bp.route('/generate', methods=['POST'])
+@optional_auth
 def generate_word_memo():
-    """
-    读取数据库中预生成的单词记忆素材（纯本地，无需调用大模型）
-    入参：word_id(必填) + style(可选，返回对应风格)
-    """
-    try:
-        body = request.get_json(silent=True)
-        if not body or 'word_id' not in body:
-            return json_response(code=400, msg='缺少必填参数 word_id')
-
-        word_id = body.get('word_id')
-        if not isinstance(word_id, int):
-            try:
-                word_id = int(word_id)
-            except (ValueError, TypeError):
-                return json_response(code=400, msg='word_id 必须为整数')
-
-        style = _valid_style(body.get('style', 'simple'))
-
-        word = _read_word_from_db(word_id, style)
-        if not word:
-            return json_response(code=404, msg=f'单词 ID {word_id} 不存在')
-
-        word['style'] = style
-        return json_response(data=word, msg='OK')
-
-    except RuntimeError:
-        return json_response(code=500, msg='数据库连接异常，请稍后重试')
-    except Exception:
-        return json_response(code=500, msg='获取记忆素材失败，请稍后重试')
+    """读取数据库中预生成的单词记忆素材（纯本地，无需调用大模型）"""
+    return _fetch_memo_from_db()
 
 
 def _valid_style(style):
