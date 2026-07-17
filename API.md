@@ -55,9 +55,13 @@
 
 ```
 GET /api/words?page=1&size=10&keyword=abandon
+Authorization: Bearer <token>  (可选，登录后返回当前用户的 review_status)
 ```
 
+> 登录后请求会返回当前用户对该单词的复习状态；未登录则默认全部返回 0（待复习）。
+
 **请求参数**
+
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|:--:|--------|------|
@@ -94,7 +98,9 @@ GET /api/words?page=1&size=10&keyword=abandon
 
 ```
 GET /api/words/{id}
+Authorization: Bearer <token>  (可选，登录后返回当前用户的 review_status)
 ```
+
 
 **成功响应**
 
@@ -169,12 +175,15 @@ Authorization: Bearer <token>
 }
 ```
 
-### 2.4 更新单词复习状态 `🔒 JWT`
+### 2.4 更新当前用户单词复习状态 `🔒 JWT`
 
 ```
 PUT /api/words/{id}/status
 Authorization: Bearer <token>
 ```
+
+> 状态按用户隔离存储在 `user_word_status` 表，不会影响其他用户。
+
 
 **请求体**
 

@@ -141,10 +141,23 @@ npm run dev
 | word | VARCHAR(100) | 单词 |
 | phonetic | VARCHAR(100) | 音标 |
 | basic_meaning | TEXT | 中文释义 |
-| review_status | INTEGER | 复习状态（0=待复习，1=已掌握） |
+| review_status | INTEGER | 兼容旧字段，实际状态由 user_word_status 维护 |
 | created_at | TIMESTAMP | 创建时间 |
 
+#### user_word_status（用户-单词状态表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | SERIAL | 主键，自增 |
+| user_id | INTEGER | 用户 ID（外键 → users） |
+| word_id | INTEGER | 单词 ID（外键 → words） |
+| review_status | INTEGER | 复习状态（0=待复习，1=已掌握） |
+| updated_at | TIMESTAMP | 更新时间 |
+
+> 不同用户的复习状态相互隔离，避免 A 用户标记掌握后 B 用户也显示已掌握。
+
 #### users（用户表）
+
 
 | 字段 | 类型 | 说明 |
 |------|------|------|

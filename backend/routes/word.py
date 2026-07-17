@@ -1,11 +1,12 @@
 """
 单词相关接口路由
-- GET  /api/words           分页单词列表（公开）
-- GET  /api/words/<word_id> 单词详情（公开）
+- GET  /api/words           分页单词列表（公开，登录用户带个人复习状态）
+- GET  /api/words/<word_id> 单词详情（公开，登录用户带个人复习状态）
 - POST /api/words           新增单词（需 JWT 鉴权）
+- PUT  /api/words/<word_id>/status 更新当前用户复习状态
 """
 import logging
-from flask import Blueprint, request
+from flask import Blueprint, request, g
 from supabase_client import get_supabase
 from utils.response import json_response
 from utils.auth import optional_auth, jwt_required
@@ -15,9 +16,36 @@ logger = logging.getLogger(__name__)
 word_bp = Blueprint('word', __name__, url_prefix='/api/words')
 
 
+def _user_status_map(user_id):
+    """查询用户全部单词状态，返回 {word_id: review_status}"""
+    if not user_id:
+        return {}
+    try:
+        supabase = get_supabase()
+        result = supabase.table('user_word_status') \
+            .select('word_id,review_status') \
+            .eq('user_id', user_id) \
+            .execute()
+        return {row['word_id']: row.get('review_status', 0) for row in (result.data or [])}
+    except Exception:
+        logger.exception('Failed to load user_word_status for user_id=%s', user_id)
+        return {}
+
+
+def _attach_user_status(words, user_id):
+    """将用户状态合并到单词列表中"""
+    if not user_id or not words:
+        return words
+    status_map = _user_status_map(user_id)
+    for w in words:
+        w['review_status'] = status_map.get(w['id'], 0)
+    return words
+
+
 @word_bp.route('', methods=['GET'])
+@optional_auth
 def get_words():
-    """分页获取单词列表，支持 keyword 模糊搜索"""
+    """分页获取单词列表，支持 keyword 模糊搜索，登录用户带个人状态"""
     try:
         page = request.args.get('page', 1, type=int)
         size = request.args.get('size', 10, type=int)
@@ -54,6 +82,10 @@ def get_words():
         result = query.range(offset, offset + size - 1).execute()
         words = result.data if result.data else []
 
+        # 合并当前用户状态
+        user_id = getattr(g, 'user_id', None)
+        words = _attach_user_status(words, user_id)
+
         return json_response(data={
             'list': words,
             'total': total,
@@ -68,8 +100,9 @@ def get_words():
 
 
 @word_bp.route('/<int:word_id>', methods=['GET'])
+@optional_auth
 def get_word_detail(word_id):
-    """根据单词 ID 查单条详情"""
+    """根据单词 ID 查单条详情，登录用户带个人状态"""
     try:
         supabase = get_supabase()
         result = supabase.table('words') \
@@ -80,7 +113,14 @@ def get_word_detail(word_id):
         if not result.data:
             return json_response(code=404, msg=f'单词 ID {word_id} 不存在')
 
-        return json_response(data=result.data[0])
+        word = result.data[0]
+        user_id = getattr(g, 'user_id', None)
+        if user_id:
+            word['review_status'] = _user_status_map(user_id).get(word_id, 0)
+        else:
+            word['review_status'] = 0
+
+        return json_response(data=word)
 
     except Exception:
         logger.exception('Failed to get word detail for id=%d', word_id)
@@ -148,7 +188,7 @@ def add_word():
 @jwt_required
 def update_word_status(word_id):
     """
-    更新单词复习状态
+    更新当前用户对该单词的复习状态
     入参：{ "review_status": 0 或 1 }
     review_status: 0=待复习, 1=已掌握
     """
@@ -161,6 +201,7 @@ def update_word_status(word_id):
         if review_status not in (0, 1):
             return json_response(code=400, msg='review_status 必须为 0 或 1')
 
+        user_id = g.user_id
         supabase = get_supabase()
 
         # 校验单词存在
@@ -168,15 +209,27 @@ def update_word_status(word_id):
         if not check.data:
             return json_response(code=404, msg='单词不存在')
 
-        supabase.table('words').update({'review_status': review_status}).eq('id', word_id).execute()
+        # 写入用户状态表（存在则更新，不存在则插入）
+        existing = supabase.table('user_word_status') \
+            .select('id') \
+            .eq('user_id', user_id) \
+            .eq('word_id', word_id) \
+            .execute()
+
+        if existing.data:
+            supabase.table('user_word_status') \
+                .update({'review_status': review_status}) \
+                .eq('id', existing.data[0]['id']) \
+                .execute()
+        else:
+            supabase.table('user_word_status') \
+                .insert({'user_id': user_id, 'word_id': word_id, 'review_status': review_status}) \
+                .execute()
 
         status_text = '已掌握' if review_status == 1 else '待复习'
         return json_response(data={'word_id': word_id, 'review_status': review_status}, msg=f'单词已标记为"{status_text}"')
 
     except Exception as e:
-        err_msg = str(e)
-        if 'review_status' in err_msg.lower() and ('not exist' in err_msg.lower() or 'column' in err_msg.lower()):
-            return json_response(code=500, msg='数据库缺少 review_status 字段，请在 Supabase 执行: ALTER TABLE words ADD COLUMN IF NOT EXISTS review_status INTEGER DEFAULT 0;')
         logger.exception('Failed to update word status for id=%d', word_id)
         return json_response(code=500, msg='更新单词状态失败，请稍后重试')
 
@@ -198,3 +251,4 @@ def delete_word(word_id):
     except Exception:
         logger.exception('Failed to delete word id=%d', word_id)
         return json_response(code=500, msg='删除单词失败，请稍后重试')
+

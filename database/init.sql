@@ -31,10 +31,23 @@ CREATE TABLE IF NOT EXISTS study_record (
     study_date      TIMESTAMP DEFAULT NOW()
 );
 
--- 4. 添加 review_status 字段（单词掌握状态：0=待复习，1=已掌握）
+-- 4. 添加 review_status 字段（兼容旧数据，实际按用户状态由 user_word_status 表维护）
 ALTER TABLE words ADD COLUMN IF NOT EXISTS review_status INTEGER DEFAULT 0;
 
--- 4b. 添加 AI 记忆素材字段
+-- 4c. 用户-单词掌握状态表（隔离不同用户状态）
+CREATE TABLE IF NOT EXISTS user_word_status (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER REFERENCES users(id) NOT NULL,
+    word_id         INTEGER REFERENCES words(id) NOT NULL,
+    review_status   INTEGER DEFAULT 0,
+    updated_at      TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, word_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_word_status_user_id ON user_word_status(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_word_status_word_id ON user_word_status(word_id);
+
+-- 4d. 添加 AI 记忆素材字段
 ALTER TABLE words ADD COLUMN IF NOT EXISTS root_analysis TEXT DEFAULT '';
 ALTER TABLE words ADD COLUMN IF NOT EXISTS mnemonic      TEXT DEFAULT '';
 ALTER TABLE words ADD COLUMN IF NOT EXISTS extra_example TEXT DEFAULT '';
@@ -81,6 +94,7 @@ ALTER TABLE words             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_record      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE practice_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_word_status  ENABLE ROW LEVEL SECURITY;
 
 -- 7b. words 表：匿名可读，写入仅 service_role 受控（后端通过 API 操作）
 CREATE POLICY words_select_anon ON words
@@ -96,4 +110,8 @@ CREATE POLICY study_record_select_anon ON study_record
 
 -- 7e. practice_progress 表：匿名可读，写入仅后端受控
 CREATE POLICY practice_progress_select_anon ON practice_progress
+    FOR SELECT USING (true);
+
+-- 7f. user_word_status 表：匿名可读，写入仅后端受控
+CREATE POLICY user_word_status_select_anon ON user_word_status
     FOR SELECT USING (true);

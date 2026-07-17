@@ -1,10 +1,11 @@
 """
 学习记录接口路由 — 基于实际 Supabase 表结构
 study_record: id, user_id, word_id, memory_content, study_date
-words: id, word, phonetic, basic_meaning, created_at, review_status
+words: id, word, phonetic, basic_meaning, created_at
+user_word_status: user_id, word_id, review_status
 """
 import logging
-from flask import Blueprint, request
+from flask import Blueprint, request, g
 from supabase_client import get_supabase
 from datetime import datetime, timezone
 from utils.response import json_response
@@ -15,11 +16,24 @@ logger = logging.getLogger(__name__)
 record_bp = Blueprint('record', __name__, url_prefix='/api/study')
 
 
+def _user_word_status_map(user_id):
+    """查询用户全部单词状态，返回 {word_id: review_status}"""
+    try:
+        supabase = get_supabase()
+        result = supabase.table('user_word_status') \
+            .select('word_id,review_status') \
+            .eq('user_id', user_id) \
+            .execute()
+        return {row['word_id']: row.get('review_status', 0) for row in (result.data or [])}
+    except Exception:
+        logger.exception('Failed to load user_word_status for user_id=%s', user_id)
+        return {}
+
+
 @record_bp.route('/add', methods=['POST'])
 @jwt_required
 def add_study_record():
     """新增学习记录（需 JWT 鉴权）"""
-    from flask import g
     try:
         body = request.get_json(silent=True)
         if not body:
@@ -64,7 +78,6 @@ def add_study_record():
 @jwt_required
 def get_study_list():
     """分页查询用户学习记录，关联单词信息，支持日期筛选和 review_status 筛选（需 JWT 鉴权）"""
-    from flask import g
     try:
         user_id = g.user_id
 
@@ -82,7 +95,7 @@ def get_study_list():
 
         supabase = get_supabase()
 
-        select_fields = '*, words!inner(id,word,phonetic,basic_meaning,review_status)'
+        select_fields = '*, words!inner(id,word,phonetic,basic_meaning)'
 
         # 第一步：用 count='exact' + limit(0) 只取总数，不拉数据
         count_query = supabase.table('study_record').select(select_fields, count='exact').eq('user_id', user_id)
@@ -91,14 +104,14 @@ def get_study_list():
         count_result = count_query.limit(0).execute()
         raw_total = count_result.count if count_result.count else 0
 
-        # 第二步：拉取数据
+        # 第二步：拉取数据（不依赖 words.review_status，改为查询 user_word_status）
         data_query = supabase.table('study_record').select(select_fields).eq('user_id', user_id)
         if filter_date:
             data_query = data_query.gte('study_date', filter_date + 'T00:00:00').lt('study_date', filter_date + 'T23:59:59')
         data_query = data_query.order('study_date', desc=True)
 
         if review_status is not None:
-            # 需要过滤 review_status：拉全部数据在 Python 侧过滤（Supabase REST API 无法对 JOIN 字段做 .eq）
+            # 需要按状态过滤：先拉全部数据，Python 侧过滤
             data_result = data_query.range(0, raw_total - 1).execute() if raw_total > 0 else None
         else:
             # 不需要过滤：数据库层直接分页
@@ -110,14 +123,13 @@ def get_study_list():
 
         # 构建记录列表
         all_data = data_result.data if (data_result and data_result.data) else []
+        status_map = _user_word_status_map(user_id)
         records = []
         for r in all_data:
             wi = r.get('words', {})
+            ws = status_map.get(r['word_id'], 0)
             # Python 侧兜底过滤 review_status
             if review_status is not None and review_status in (0, 1):
-                ws = wi.get('review_status')
-                if ws is None:
-                    ws = 0
                 if ws != review_status:
                     continue
             records.append({
@@ -127,11 +139,11 @@ def get_study_list():
                 'word': wi.get('word', ''),
                 'phonetic': wi.get('phonetic', ''),
                 'meaning': wi.get('basic_meaning', ''),
-                'review_status': wi.get('review_status'),
+                'review_status': ws,
                 'study_date': r.get('study_date'),
             })
 
-        # 修复：total 应根据是否有 review_status 过滤区分计算
+        # total 应根据是否有 review_status 过滤区分计算
         if review_status is not None:
             # Python 侧过滤后，total 为过滤后的总数
             total = len(records)
@@ -155,7 +167,6 @@ def get_study_list():
 @jwt_required
 def delete_study_record(record_id):
     """删除学习记录（需 JWT 鉴权）"""
-    from flask import g
     try:
         supabase = get_supabase()
 
@@ -171,3 +182,4 @@ def delete_study_record(record_id):
     except Exception:
         logger.exception('Failed to delete study record')
         return json_response(code=500, msg='删除学习记录失败，请稍后重试')
+

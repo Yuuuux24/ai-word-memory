@@ -33,7 +33,8 @@ export default function Home() {
     try {
       let url = `${API_BASE}/api/words?page=${p}&size=${s}`;
       if (kw) url += `&keyword=${encodeURIComponent(kw)}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { headers: authHeaders() });
+
       const json = await res.json();
       if (json.code === 200 && json.data) {
         setWords(json.data.list || []);
