@@ -261,7 +261,7 @@ ai-word-memory/
 ├── prompt_log.md            # 全部 Prompt 归档文档
 ├── task_record.md           # 每日开发任务记录
 ├── CODE_REVIEW_REPORT.md    # AI Code Review 报告
-├── SUMMARY.md               # 个人实训总结报告
+├── SUMMARY.docx             # 个人实训总结报告（Word 文档）
 ├── .gitignore
 └── README.md
 ```

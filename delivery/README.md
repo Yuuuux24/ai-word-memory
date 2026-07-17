@@ -29,7 +29,7 @@ ai-word-memory/
 ├── prompt_log.md         # 全部 AI 开发 Prompt 归档（含 AI 原始输出截图引用 + 功能-文件对照表）
 ├── task_record.md        # 每日开发任务记录
 ├── CODE_REVIEW_REPORT.md # AI Code Review 报告
-└── SUMMARY.md            # 个人实训总结报告
+└── SUMMARY.docx          # 个人实训总结报告（Word 文档）
 ```
 
 ### 2. 页面功能清单
