@@ -1,7 +1,7 @@
 import { Layout as AntLayout, Menu, Button, Drawer, Grid } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const { Header, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -24,49 +24,70 @@ export default function Layout({ children }) {
     setDrawerOpen(false);
   };
 
-  const currentLabel = menuItems.find((m) => m.key === router.pathname)?.label || '';
-
   return (
     <AntLayout style={{ minHeight: '100vh', background: 'transparent' }}>
+      {/* 顶部导航栏 */}
       <Header
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 24px',
-          background: 'linear-gradient(135deg, #4a54c9 0%, #6c7cfc 100%)',
-          boxShadow: '0 2px 12px rgba(74, 84, 201, 0.25)',
+          padding: isMobile ? '0 16px' : '0 28px',
+          background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 40%, #818cf8 100%)',
+          boxShadow: '0 2px 16px rgba(79, 70, 229, 0.2)',
           position: 'sticky',
           top: 0,
           zIndex: 100,
           height: 56,
+          backdropFilter: 'blur(12px)',
         }}
       >
+        {/* Logo */}
         <div
           style={{
             color: '#fff',
             fontSize: isMobile ? 16 : 18,
-            fontWeight: 'bold',
+            fontWeight: 700,
             whiteSpace: 'nowrap',
-            letterSpacing: 1,
+            letterSpacing: 0.5,
+            cursor: 'pointer',
+            userSelect: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
           }}
+          onClick={() => router.push('/')}
         >
+          <span style={{
+            display: 'inline-flex',
+            width: 28, height: 28,
+            borderRadius: 7,
+            background: 'rgba(255,255,255,0.2)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 15,
+            fontWeight: 700,
+          }}>
+            AI
+          </span>
           AI 单词记忆
         </div>
 
+        {/* 导航菜单 */}
         {isMobile ? (
           <>
             <Button
               type="text"
               icon={<MenuOutlined style={{ color: '#fff', fontSize: 20 }} />}
               onClick={() => setDrawerOpen(true)}
+              style={{ borderRadius: 8 }}
             />
             <Drawer
-              title="导航菜单"
+              title={<span style={{ fontWeight: 600, fontSize: 16 }}>导航菜单</span>}
               placement="right"
               onClose={() => setDrawerOpen(false)}
               open={drawerOpen}
-              width={200}
+              width={220}
               styles={{ body: { padding: 0 } }}
             >
               <Menu
@@ -74,7 +95,7 @@ export default function Layout({ children }) {
                 selectedKeys={[router.pathname]}
                 items={menuItems}
                 onClick={handleMenuClick}
-                style={{ border: 'none' }}
+                style={{ border: 'none', padding: '8px 0' }}
               />
             </Drawer>
           </>
@@ -91,20 +112,29 @@ export default function Layout({ children }) {
               background: 'transparent',
               borderBottom: 'none',
               justifyContent: 'flex-end',
+              fontWeight: 500,
             }}
           />
         )}
       </Header>
 
-      <Content style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+      {/* 内容区域 */}
+      <Content style={{
+        padding: isMobile ? '12px' : '24px',
+        maxWidth: 1200,
+        margin: '0 auto',
+        width: '100%',
+      }}>
         <div
           style={{
-            background: 'rgba(255,255,255,0.85)',
-            backdropFilter: 'blur(10px)',
+            background: 'rgba(255,255,255,0.82)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             padding: isMobile ? 18 : 28,
             borderRadius: 16,
             minHeight: 'calc(100vh - 112px)',
-            boxShadow: '0 4px 20px rgba(108,124,252,0.06)',
+            boxShadow: '0 1px 3px rgba(99,102,241,0.04), 0 4px 16px rgba(99,102,241,0.06)',
+            transition: 'all var(--transition-normal)',
           }}
         >
           {children}

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Card, Typography, Skeleton, Select, Popconfirm, Spin, message,
+  Card, Typography, Skeleton, Select, Popconfirm, Spin,
   Pagination, Button, Space, DatePicker
 } from 'antd';
-import { HistoryOutlined, EyeOutlined, CalendarOutlined, FilterOutlined, DeleteOutlined } from '@ant-design/icons';
+import { HistoryOutlined, EyeOutlined, CalendarOutlined, FilterOutlined, DeleteOutlined, BookOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { showError, showWarning, showInfo } from '@/utils/errorHandler';
 import { getToken, getUserId, authHeaders } from '@/utils/auth';
@@ -22,7 +22,7 @@ export default function History() {
   const [size, setSize] = useState(10);
   const [userId, setUserId] = useState(null);
   const [filterDate, setFilterDate] = useState(null);
-  const [reviewStatusFilter, setReviewStatusFilter] = useState(undefined); // 0=待复习, 1=已掌握, undefined=全部
+  const [reviewStatusFilter, setReviewStatusFilter] = useState(undefined);
 
   const debounceTimer = useRef(null);
 
@@ -58,7 +58,7 @@ export default function History() {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     if (userId) {
@@ -101,7 +101,7 @@ export default function History() {
       });
       const json = await res.json();
       if (json.code === 200) {
-        message.success(json.msg || '记录已删除');
+        showInfo(json.msg || '记录已删除');
         setRecords(prev => prev.filter(r => r.id !== recordId));
         setTotal(prev => prev - 1);
       } else {
@@ -112,112 +112,171 @@ export default function History() {
     }
   }, []);
 
+  // 加载中 - 过渡
   if (!userId) {
     return (
       <div style={{ textAlign: 'center', padding: '80px 20px' }}>
         <Spin size="large" />
-        <div style={{ marginTop: 20, color: '#8c8c8c', fontSize: 14 }}>正在校验登录状态...</div>
+        <div style={{ marginTop: 20, color: 'var(--text-secondary)', fontSize: 14 }}>
+          正在校验登录状态...
+        </div>
       </div>
     );
   }
 
+  // 空状态
+  const renderEmpty = () => (
+    <div className="empty-state">
+      <div className="empty-icon type-search">
+        <BookOutlined style={{ fontSize: 32 }} />
+      </div>
+      <div className="empty-text">
+        {filterDate || reviewStatusFilter !== undefined
+          ? '没有符合当前筛选条件的学习记录'
+          : '还没有背诵记录，去首页选个单词开始吧！'}
+      </div>
+      <div className="empty-actions">
+        {(filterDate || reviewStatusFilter !== undefined) && <Button onClick={() => { clearDateFilter(); setReviewStatusFilter(undefined); }}>清除全部筛选</Button>}
+        <Button type="primary" onClick={() => router.push('/')}>去背单词</Button>
+      </div>
+    </div>
+  );
+
+  // 加载骨架
+  const renderSkeleton = () => (
+    <div>
+      {[1, 2, 3].map((i) => (
+        <Card key={i} style={{ marginBottom: 12 }}>
+          <Skeleton active paragraph={{ rows: 2 }} title={{ width: '30%' }} />
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
     <div>
-      <div style={{ marginBottom: 22 }}>
+      {/* 页面标题 */}
+      <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 2, flexWrap: 'wrap' }}>
-          <HistoryOutlined style={{ fontSize: 22, color: '#6c7cfc' }} />
-          <Title level={2} style={{ margin: 0, fontSize: 24 }}>背诵历史</Title>
+          <HistoryOutlined style={{ fontSize: 24, color: 'var(--primary)' }} />
+          <h1 className="page-title" style={{ margin: 0 }}>背诵历史</h1>
         </div>
-        <Text type="secondary" style={{ fontSize: 14 }}>以下是你的全部学习记录，点击「复习」可重新查看 AI 记忆素材</Text>
-
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <CalendarOutlined style={{ color: '#6c7cfc', fontSize: 16 }} />
-          <DatePicker
-            value={filterDate}
-            onChange={handleDateChange}
-            placeholder="按日期筛选学习记录"
-            style={{ borderRadius: 8 }}
-            allowClear={false}
-          />
-          <FilterOutlined style={{ color: '#6c7cfc', fontSize: 16, marginLeft: 4 }} />
-          <Select
-            value={reviewStatusFilter}
-            onChange={(val) => { setReviewStatusFilter(val); setPage(1); }}
-            placeholder="复习状态"
-            style={{ width: 130, borderRadius: 8 }}
-            allowClear
-            onClear={() => { setReviewStatusFilter(undefined); setPage(1); }}
-            options={[
-              { value: 0, label: '待复习' },
-              { value: 1, label: '已掌握' },
-            ]}
-          />
-          {(filterDate || reviewStatusFilter !== undefined) && (
-            <Button size="small" onClick={() => { clearDateFilter(); setReviewStatusFilter(undefined); }}>
-              清除全部筛选
-            </Button>
-          )}
-        </div>
+        <p className="page-subtitle">
+          以下是你的全部学习记录，点击「复习」可重新查看 AI 记忆素材
+        </p>
       </div>
 
-      {loading ? (
-        <div>
-          {[1, 2, 3].map((i) => (
-            <Card key={i} style={{ marginBottom: 12 }}><Skeleton active paragraph={{ rows: 2 }} title={{ width: '30%' }} /></Card>
-          ))}
-        </div>
-      ) : records.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-          <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, #f0f2ff 0%, #e8ebff 100%)', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#bcc3ff' }}>?</div>
-          <Text type="secondary" style={{ fontSize: 15, display: 'block', marginBottom: 16 }}>
-            {filterDate ? '该日期没有学习记录' : '还没有背诵记录，去首页选个单词开始吧！'}
-          </Text>
-          <Space>
-            {filterDate && <Button onClick={clearDateFilter}>查看全部记录</Button>}
-            <Button type="primary" onClick={() => router.push('/')}>去背单词</Button>
-          </Space>
-        </div>
-      ) : (
+      {/* 筛选区 */}
+      <div style={{
+        marginBottom: 24, padding: '16px 20px',
+        background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(8px)',
+        borderRadius: 14, border: '1px solid var(--border-light)',
+        display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+      }}>
+        <CalendarOutlined style={{ color: 'var(--primary)', fontSize: 16 }} />
+        <DatePicker
+          value={filterDate}
+          onChange={handleDateChange}
+          placeholder="按日期筛选学习记录"
+          style={{ borderRadius: 10 }}
+          allowClear={false}
+        />
+        <FilterOutlined style={{ color: 'var(--primary)', fontSize: 16, marginLeft: 4 }} />
+        <Select
+          value={reviewStatusFilter}
+          onChange={(val) => { setReviewStatusFilter(val); setPage(1); }}
+          placeholder="复习状态"
+          style={{ width: 130 }}
+          allowClear
+          onClear={() => { setReviewStatusFilter(undefined); setPage(1); }}
+          options={[
+            { value: 0, label: '待复习' },
+            { value: 1, label: '已掌握' },
+          ]}
+        />
+        {(filterDate || reviewStatusFilter !== undefined) && (
+          <Button
+            size="small"
+            onClick={() => { clearDateFilter(); setReviewStatusFilter(undefined); }}
+            style={{ borderRadius: 8 }}
+          >
+            清除全部筛选
+          </Button>
+        )}
+      </div>
+
+      {/* 内容区 */}
+      {loading ? renderSkeleton() : records.length === 0 ? renderEmpty() : (
         <>
           {records.map((item) => (
-            <Card key={item.id} hoverable style={{ borderRadius: 14, marginBottom: 12, border: '1px solid #f0f0f0' }}
+            <Card
+              key={item.id}
+              hoverable
+              style={{ borderRadius: 14, marginBottom: 12 }}
               extra={
-                <Space>
-                  <Button type="link" icon={<EyeOutlined />} onClick={() => handleReview(item)} style={{ color: '#6c7cfc' }}>复习</Button>
-                  <Popconfirm title="确定删除此学习记录？" onConfirm={() => handleDeleteRecord(item.id)} okText="删除" cancelText="取消">
+                <Space size={8}>
+                  <Button
+                    type="link"
+                    icon={<EyeOutlined />}
+                    onClick={() => handleReview(item)}
+                    style={{ color: 'var(--primary)', fontWeight: 500 }}
+                  >
+                    复习
+                  </Button>
+                  <Popconfirm
+                    title="确定删除此学习记录？"
+                    onConfirm={() => handleDeleteRecord(item.id)}
+                    okText="删除"
+                    cancelText="取消"
+                  >
                     <Button type="link" danger icon={<DeleteOutlined />} size="small">删除</Button>
                   </Popconfirm>
                 </Space>
-              }>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
-                <Title level={4} style={{ margin: 0, color: '#4a54c9', fontSize: 18 }}>{item.word}</Title>
-                <Text type="secondary" style={{ fontSize: 13 }}>{item.phonetic}</Text>
+              }
+            >
+              {/* 单词头部 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+                <Title level={4} style={{ margin: 0, color: 'var(--primary)', fontSize: 18, fontWeight: 600 }}>
+                  {item.word}
+                </Title>
+                <Text style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{item.phonetic}</Text>
                 {item.review_status !== undefined && item.review_status !== null && (
-                  <span style={{
-                    fontSize: 12,
-                    padding: '1px 8px',
-                    borderRadius: 4,
-                    background: item.review_status === 1 ? '#f6ffed' : '#fff7e6',
-                    color: item.review_status === 1 ? '#52c41a' : '#faad14',
-                    border: `1px solid ${item.review_status === 1 ? '#b7eb8f' : '#ffe58f'}`,
-                  }}>
+                  <span className={`status-tag ${item.review_status === 1 ? 'mastered' : 'review'}`}>
                     {item.review_status === 1 ? '已掌握' : '待复习'}
                   </span>
                 )}
               </div>
-              <div style={{ padding: '8px 14px', background: 'linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%)', borderRadius: 8, display: 'inline-block' }}>
-                <Text style={{ fontSize: 14, color: '#4a4a4a' }}>{item.meaning}</Text>
+
+              {/* 释义 */}
+              <div style={{
+                padding: '10px 16px',
+                background: 'linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%)',
+                borderRadius: 10,
+                marginBottom: 12,
+                display: 'inline-block',
+                maxWidth: '100%',
+              }}>
+                <Text style={{
+                  fontSize: 14, color: 'var(--text-primary)',
+                  overflow: 'hidden', textOverflow: 'ellipsis',
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                }}>
+                  {item.meaning}
+                </Text>
               </div>
-              <div style={{ marginTop: 10 }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  <CalendarOutlined style={{ marginRight: 4 }} />
-                  {item.study_date ? new Date(item.study_date).toLocaleString('zh-CN') : ''}
+
+              {/* 日期 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CalendarOutlined style={{ color: 'var(--text-tertiary)', fontSize: 12 }} />
+                <Text style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                  {item.study_date ? dayjs(item.study_date).format('YYYY-MM-DD HH:mm') : ''}
                 </Text>
               </div>
             </Card>
           ))}
 
-          <div style={{ textAlign: 'center', marginTop: 28 }}>
+          {/* 分页 */}
+          <div style={{ textAlign: 'center', marginTop: 32 }}>
             <Pagination
               current={page}
               pageSize={size}

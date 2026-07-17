@@ -2,6 +2,8 @@
 AI 记忆素材路由
 - POST /api/ai/memo      从数据库读取预生成记忆素材（实际调用 generate_word_memo）
 - POST /api/ai/generate   从数据库读取预生成素材（按 style 返回不同风格，纯本地，零API费用）
+
+缓存策略：相同 word_id + style 组合命中内存缓存，5 分钟 TTL
 """
 import json as _json
 import logging
@@ -10,11 +12,15 @@ from flask import Blueprint, request
 from supabase_client import get_supabase
 from utils.response import json_response
 from utils.auth import optional_auth
+from cachetools import TTLCache
 
 logger = logging.getLogger(__name__)
 
 # 创建蓝图，URL 前缀为 /api/ai
 ai_api_bp = Blueprint('ai_api', __name__, url_prefix='/api/ai')
+
+# 内存缓存：相同 word_id + style 复用在 5 分钟内命中
+_memo_cache = TTLCache(maxsize=500, ttl=300)
 
 # 风格的备选 key 顺序（数据库 mnemonic JSON 可能只有一种 key，逐级兜底）
 STYLE_FALLBACK = {
@@ -62,7 +68,16 @@ def _read_word_from_db(word_id, style='simple'):
         return None
 
     word = result.data[0]
-    return {
+
+    # 检查缓存：相同 word_id + style 命中
+    cache_key = f"{word_id}:{style}"
+    if cache_key in _memo_cache:
+        cached = dict(_memo_cache[cache_key])
+        cached['from_cache'] = True
+        return cached
+
+    # 构建素材
+    memo_data = {
         'word_id': word_id,
         'word': word['word'],
         'root': word.get('root_analysis') or word['word'],
@@ -70,6 +85,10 @@ def _read_word_from_db(word_id, style='simple'):
         'examples': [word.get('extra_example') or f"I find the word '{word['word']}' very useful."],
         'from_cache': False,
     }
+
+    # 写入缓存
+    _memo_cache[cache_key] = memo_data
+    return memo_data
 
 
 # ==================== 核心逻辑（两个路由复用） ====================
