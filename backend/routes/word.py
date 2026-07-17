@@ -6,6 +6,7 @@
 - PUT  /api/words/<word_id>/status 更新当前用户复习状态
 """
 import logging
+from datetime import datetime, timezone
 from flask import Blueprint, request, g
 from supabase_client import get_supabase
 from utils.response import json_response
@@ -225,6 +226,27 @@ def update_word_status(word_id):
             supabase.table('user_word_status') \
                 .insert({'user_id': user_id, 'word_id': word_id, 'review_status': review_status}) \
                 .execute()
+
+        # 标记为已掌握时，同步写入/更新 study_record 学习记录
+        if review_status == 1:
+            record_existing = supabase.table('study_record') \
+                .select('id') \
+                .eq('user_id', user_id) \
+                .eq('word_id', word_id) \
+                .execute()
+            if record_existing.data:
+                supabase.table('study_record') \
+                    .update({'study_date': datetime.now(timezone.utc).isoformat()}) \
+                    .eq('id', record_existing.data[0]['id']) \
+                    .execute()
+            else:
+                supabase.table('study_record') \
+                    .insert({
+                        'user_id': user_id,
+                        'word_id': word_id,
+                        'study_date': datetime.now(timezone.utc).isoformat(),
+                    }) \
+                    .execute()
 
         status_text = '已掌握' if review_status == 1 else '待复习'
         return json_response(data={'word_id': word_id, 'review_status': review_status}, msg=f'单词已标记为"{status_text}"')
