@@ -7,6 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN chmod +x entrypoint.sh
+
 EXPOSE 5000
 
-CMD exec gunicorn wsgi:application --bind 0.0.0.0:${PORT:-5000}
+CMD ["./entrypoint.sh"]
