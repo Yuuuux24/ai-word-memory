@@ -80,6 +80,13 @@ export default function Home() {
     setAiModalOpen(true);
   }, []);
 
+  // AI memo 保存后同步首页状态
+  const handleMemoSaved = useCallback(() => {
+    if (currentWord) {
+      setWords(prev => prev.map(w => w.id === currentWord.id ? { ...w, review_status: 1 } : w));
+    }
+  }, [currentWord]);
+
   const handlePageChange = useCallback((p, s) => {
     setPage(p);
     setSize(s);
@@ -282,6 +289,7 @@ export default function Home() {
         word={currentWord}
         onClose={closeAiModal}
         showSaveBtn
+        onSave={handleMemoSaved}
       />
     </div>
   );
