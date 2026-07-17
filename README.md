@@ -257,8 +257,11 @@ ai-word-memory/
 ├── database/
 │   └── init.sql             # 数据库初始化 SQL
 ├── prompt-record/           # AI 开发 Prompt 截图归档（Day1~Day5）
+├── API.md                   # 独立 API 接口文档
 ├── prompt_log.md            # 全部 Prompt 归档文档
 ├── task_record.md           # 每日开发任务记录
+├── CODE_REVIEW_REPORT.md    # AI Code Review 报告
+├── SUMMARY.md               # 个人实训总结报告
 ├── .gitignore
 └── README.md
 ```

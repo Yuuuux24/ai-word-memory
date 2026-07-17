@@ -23,10 +23,13 @@ ai-word-memory/
 ├── backend/          # Flask 后端（4 个路由蓝图 + 种子脚本）
 ├── frontend/         # Next.js 前端（4 个页面 + 2 个组件）
 ├── database/         # 数据库初始化 SQL + RLS 策略
-├── prompt-record/    # Day1~Day5 AI 对话截图归档
-├── README.md         # 项目说明文档
-├── prompt_log.md     # 全部 AI 开发 Prompt 归档
-└── task_record.md    # 每日开发任务记录
+├── prompt-record/        # Day1~Day5 AI 对话截图归档
+├── README.md             # 项目说明文档
+├── API.md                # 独立 API 接口文档
+├── prompt_log.md         # 全部 AI 开发 Prompt 归档（含 AI 原始输出截图引用 + 功能-文件对照表）
+├── task_record.md        # 每日开发任务记录
+├── CODE_REVIEW_REPORT.md # AI Code Review 报告
+└── SUMMARY.md            # 个人实训总结报告
 ```
 
 ### 2. 页面功能清单
