@@ -12,8 +12,9 @@ load_dotenv()
 
 class Config:
     """应用全局配置"""
-    # 跨域配置：允许前端 localhost:3000 访问
-    CORS_ORIGINS = ['http://localhost:3000']
+    # 跨域配置：从环境变量读取，支持逗号分隔多个域名（默认 localhost:3000）
+    _origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000')
+    CORS_ORIGINS = [o.strip() for o in _origins.split(',') if o.strip()]
 
     # Supabase 配置
     SUPABASE_URL = os.getenv('SUPABASE_URL', '')
