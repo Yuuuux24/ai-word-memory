@@ -35,8 +35,12 @@ def create_app():
 
     app = Flask(__name__)
 
-    # 全局开启 CORS 跨域，适配前端 3000 端口
-    CORS(app, origins=Config.CORS_ORIGINS)
+    # 全局开启 CORS 跨域
+    # CORS_ORIGINS 设为 * 时允许所有来源，否则使用逗号分隔的域名列表
+    if '*' in Config.CORS_ORIGINS:
+        CORS(app)
+    else:
+        CORS(app, origins=Config.CORS_ORIGINS)
 
     # 注册路由蓝图
     app.register_blueprint(word_bp)
