@@ -4,6 +4,17 @@
 
 ---
 
+## 线上访问
+
+| 服务 | 地址 |
+|------|------|
+| **前端页面** | [ai-word-memory-web-283624-5-1386564716.sh.run.tcloudbase.com](https://ai-word-memory-web-283624-5-1386564716.sh.run.tcloudbase.com) |
+| **后端 API** | [ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com](https://ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com) |
+
+> 部署平台：腾讯云 CloudBase 云托管（容器型服务）
+
+---
+
 ## 技术栈
 
 | 层级 | 技术 | 说明 |
