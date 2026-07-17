@@ -73,7 +73,7 @@ export default function Practice() {
 
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/api/words?page=1&size=10`, { headers: authHeaders() });
+        const res = await fetch(`${API_BASE}/api/words?page=1&size=500`, { headers: authHeaders() });
         const json = await res.json();
         if (json.code === 200 && json.data?.list?.length) {
           const words = json.data.list;
@@ -158,7 +158,10 @@ export default function Practice() {
       candidates = active.filter(w => (cds[w.id] || 0) === minCd);
     }
 
-    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+    // 优先推送正确次数低的单词（新词优先），同次数间随机
+    const minCount = Math.min(...candidates.map(w => cnts[w.id] || 0));
+    const topCandidates = candidates.filter(w => (cnts[w.id] || 0) === minCount);
+    const chosen = topCandidates[Math.floor(Math.random() * topCandidates.length)];
     setCurrentWord(chosen);
     const wrongs = pickWrongOptions(chosen, words);
     const opts = shuffleOptions(chosen.basic_meaning, wrongs);

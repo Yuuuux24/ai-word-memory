@@ -56,8 +56,8 @@ def get_words():
             page = 1
         if size < 1:
             size = 10
-        if size > 50:
-            size = 50
+        if size > 500:
+            size = 500
 
         supabase = get_supabase()
 
