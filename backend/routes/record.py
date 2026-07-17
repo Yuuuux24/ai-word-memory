@@ -61,14 +61,30 @@ def add_study_record():
         existing = supabase.table('study_record').select('*').eq('user_id', user_id).eq('word_id', word_id).execute()
         if existing.data:
             supabase.table('study_record').update({'study_date': datetime.now(timezone.utc).isoformat()}).eq('id', existing.data[0]['id']).execute()
-            return json_response(msg='复习记录已更新')
         else:
             supabase.table('study_record').insert({
                 'user_id': user_id,
                 'word_id': word_id,
                 'study_date': datetime.now(timezone.utc).isoformat(),
             }).execute()
-            return json_response(msg='学习记录保存成功')
+
+        # 同步标记为已掌握
+        status_existing = supabase.table('user_word_status') \
+            .select('id') \
+            .eq('user_id', user_id) \
+            .eq('word_id', word_id) \
+            .execute()
+        if status_existing.data:
+            supabase.table('user_word_status') \
+                .update({'review_status': 1}) \
+                .eq('id', status_existing.data[0]['id']) \
+                .execute()
+        else:
+            supabase.table('user_word_status') \
+                .insert({'user_id': user_id, 'word_id': word_id, 'review_status': 1}) \
+                .execute()
+
+        return json_response(msg='学习记录保存成功')
     except Exception:
         logger.exception('Failed to save study record')
         return json_response(code=500, msg='保存学习记录失败，请稍后重试')
