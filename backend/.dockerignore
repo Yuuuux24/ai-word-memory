@@ -1,0 +1,11 @@
+.env
+.env.example
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache
+.git
+.gitignore
+railway.json
