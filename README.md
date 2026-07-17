@@ -1,9 +1,5 @@
 # AI 单词记忆 (AI Word Memory)
 
-基于 **Next.js + Flask + Supabase** 的全栈 AI 单词记忆 Web 应用，支持单词浏览、AI 趣味记忆素材生成、用户登录及学习记录管理。
-
----
-
 ## 线上访问
 
 | 服务 | 地址 |
@@ -12,6 +8,10 @@
 | **后端 API** | [ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com](https://ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com) |
 
 > 部署平台：腾讯云 CloudBase 云托管（容器型服务）
+
+---
+
+基于 **Next.js + Flask + Supabase** 的全栈 AI 单词记忆 Web 应用，支持单词浏览、AI 趣味记忆素材生成、用户登录及学习记录管理。
 
 ---
 
