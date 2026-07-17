@@ -23,6 +23,8 @@
 - `ac74734` fix: 配置 Next.js transpilePackages 解决 Ant Design rc-util 模块解析错误
 - `0c702f1` feat: 配置Supabase云端数据库连接，创建单词/用户/学习记录数据表
 
+**AI 原始输出截图：** `prompt-record/day1/talk1.png`
+
 ---
 
 ### Prompt 2 — 单词接口 + 前端首页联调
@@ -39,6 +41,8 @@
 
 **Git 提交：**
 - `c52578b` feat: 实现单词分页/详情查询后端接口，优化首页单词卡片UI样式
+
+**AI 原始输出截图：** `prompt-record/day1/talk1.png`（同 Prompt 1 对话上下文）
 
 ---
 
@@ -61,6 +65,8 @@
 - `47d1278` feat: 开发AI单词记忆素材生成接口，前端联调渲染单词数据与AI释义
 - `6fab065` fix: 修复ai_api.py中文引号导致Python语法错误
 
+**AI 原始输出截图：** `prompt-record/day2/talk1.png`、`talk2.png`
+
 ---
 
 ### Prompt 4 — Supabase 密钥修复
@@ -76,6 +82,8 @@
 
 **Git 提交：**
 - `5730e76` fix: 修正supabase-python依赖版本(>=2.15)以兼容新版sb_密钥格式,联通数据库成功获取4个单词
+
+**AI 原始输出截图：** `prompt-record/day2/talk3.png`、`talk4.png`
 
 ---
 
@@ -96,6 +104,8 @@
 **Git 提交：**
 - `9710523` feat: 新增用户登录/注册接口
 
+**AI 原始输出截图：** `prompt-record/day3/talk1.png`
+
 ---
 
 ### Prompt 6 — 学习记录 CRUD 接口
@@ -111,6 +121,8 @@
 
 **Git 提交：**
 - `2ef364b` feat: 新增学习记录CRUD接口
+
+**AI 原始输出截图：** `prompt-record/day3/talk1.png`（同 Prompt 5 对话上下文）
 
 ---
 
@@ -128,6 +140,8 @@
 **Git 提交：**
 - `672853c` feat: 前端新增登录页与背诵历史页
 
+**AI 原始输出截图：** `prompt-record/day3/talk2.png`、`talk3.png`
+
 ---
 
 ### Prompt 8 — 首页保存学习记录 + 字段修复
@@ -142,6 +156,8 @@
 
 **Git 提交：**
 - `4a0a068` feat: 首页保存学习记录功能与AI接口字段修复
+
+**AI 原始输出截图：** `prompt-record/day3/talk3.png`
 
 ---
 
@@ -161,6 +177,8 @@
 
 **Git 提交：**
 - `7079398` feat: 全站简约UI美化，配置渐变纯色护眼背景，完成移动端自适应，优化弹窗与占位样式
+
+**AI 原始输出截图：** `prompt-record/day4/talk1.png`、`talk2.png`、`talk3.png`
 
 ---
 
@@ -182,6 +200,8 @@
 **Git 提交：**
 - `fe100b3` fix: 优化交互容错，新增分页防抖、单词查重、日期筛选、接口超时重试与统一错误提示
 
+**AI 原始输出截图：** `prompt-record/day4/talk4.png`
+
 ---
 
 ### Prompt 11 — README 项目文档
@@ -202,6 +222,8 @@
 **Git 提交：**
 - `2b502f4` docs: 编写完整项目README说明文档，包含配置教程、启动步骤、功能介绍与API文档
 
+**AI 原始输出截图：** `prompt-record/day4/talk5.png`
+
 ---
 
 ### Prompt 12 — 实训日志归档
@@ -214,6 +236,8 @@
 
 **Git 提交：**
 - （当前提交）docs: 归档全项目AI开发Prompt，整理实训开发日志文档
+
+**AI 原始输出截图：** `prompt-record/day4/talk5.png`（同 Prompt 11 对话上下文）
 
 ---
 
@@ -232,6 +256,8 @@
 
 **Git 提交：**
 - `df84c7d` fix: 全流程验收修复遗留细微bug，统一全站提示文案与视觉细节
+
+**AI 原始输出截图：** `prompt-record/day5/talk1.png`、`talk2.png`
 
 ---
 
@@ -252,6 +278,8 @@
 **Git 提交：**
 - `ee0b56e` feat: 拓展新增单词模糊搜索、单词掌握标记功能，支持复习状态筛选
 
+**AI 原始输出截图：** `prompt-record/day5/talk3.png`、`talk4.png`
+
 ---
 
 ### Prompt 15 — 实训交付材料 + 任务记录
@@ -265,6 +293,8 @@
 **Git 提交：**
 - （当前提交）docs: 整理实训交付全套材料，新增每日开发任务记录文档
 
+**AI 原始输出截图：** `prompt-record/day5/talk5.png`
+
 ---
 
 ### Prompt 16 — 考研单词批量导入
@@ -277,6 +307,8 @@
 
 **Git 提交：**
 - （随 commit 10 提交）`backend/seed_kaoyan_words.py`
+
+**AI 原始输出截图：** `prompt-record/day5/talk6.png`
 
 ---
 
@@ -305,6 +337,29 @@
 
 ---
 
+## Prompt 与功能/文件对照表
+
+| Prompt | 功能 | 涉及文件 |
+|--------|------|----------|
+| Prompt 1 | 数据库与项目初始化 | `backend/app.py`, `backend/config.py`, `backend/supabase_client.py`, `database/init.sql`, `frontend/pages/_app.js`, `frontend/components/Layout.js`, `frontend/next.config.js` |
+| Prompt 2 | 单词分页接口 + 首页 UI | `backend/routes/word.py` (GET /api/words, GET /api/words/:id), `frontend/pages/index.js`, `frontend/utils/errorHandler.js` |
+| Prompt 3 | AI 记忆素材接口 | `backend/routes/ai_api.py` (POST /api/ai/memo), `frontend/components/AIMemoModal.js` |
+| Prompt 4 | Supabase 密钥兼容修复 | `backend/requirements.txt`, `backend/.env.example`, `backend/supabase_client.py` |
+| Prompt 5 | 用户登录/注册接口 | `backend/routes/user.py` (POST /api/user/register, POST /api/user/login) |
+| Prompt 6 | 学习记录 CRUD 接口 | `backend/routes/record.py` (POST /api/study/add, GET /api/study/list, DELETE /api/study/:id) |
+| Prompt 7 | 前端登录页 + 背诵历史页 | `frontend/pages/login.js`, `frontend/pages/history.js`, `frontend/components/Layout.js` |
+| Prompt 8 | 首页保存学习记录 + 字段修复 | `frontend/pages/index.js`, `frontend/components/AIMemoModal.js` |
+| Prompt 9 | 全站简约 UI 美化 | `frontend/styles/globals.css`, `frontend/components/Layout.js`, 全部页面文件 |
+| Prompt 10 | 交互容错优化 | `backend/routes/word.py`, `frontend/pages/index.js`, `frontend/pages/history.js`, `frontend/pages/login.js`, `frontend/utils/errorHandler.js` |
+| Prompt 11 | README 项目文档 | `README.md` |
+| Prompt 12 | 实训日志归档 | `prompt_log.md`, `prompt-record/day4/` |
+| Prompt 13 | 全流程验收 Bug 修复 | 所有页面及后端路由文件 |
+| Prompt 14 | 单词模糊搜索 + 掌握标记 | `backend/routes/word.py` (keyword 参数), `frontend/pages/index.js`, `frontend/pages/history.js` |
+| Prompt 15 | 实训交付材料 + 任务记录 | `task_record.md`, `delivery/README.md` |
+| Prompt 16 | 考研单词批量导入 | `backend/seed_kaoyan_words.py`, `backend/generate_content.py`, `backend/mnemonics_data.py` |
+
+---
+
 ## 截图归档
 
 | 日期 | 目录 | 内容 |
@@ -317,4 +372,4 @@
 
 ---
 
-> 生成时间：2026-07-14 | 实训项目：AI 单词记忆全栈 Web 应用 | 共 18 轮 Git 提交
+> 生成时间：2026-07-14 | 更新：2026-07-17 | 实训项目：AI 单词记忆全栈 Web 应用 | 共 43 轮 Git 提交
