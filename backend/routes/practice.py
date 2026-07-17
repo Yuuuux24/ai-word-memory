@@ -61,10 +61,45 @@ def save_progress():
                 .eq('user_id', user_id) \
                 .eq('word_id', word_id) \
                 .execute()
-            return json_response(msg='进度已更新')
         else:
             supabase.table('practice_progress').insert(data).execute()
-            return json_response(msg='进度已保存')
+
+        # 答对3次即掌握：同步写入 user_word_status + study_record
+        REQUIRED_CORRECT = 3
+        if correct_count >= REQUIRED_CORRECT:
+            # 1) 标记已掌握
+            status_existing = supabase.table('user_word_status') \
+                .select('id') \
+                .eq('user_id', user_id) \
+                .eq('word_id', word_id) \
+                .execute()
+            if status_existing.data:
+                supabase.table('user_word_status') \
+                    .update({'review_status': 1}) \
+                    .eq('id', status_existing.data[0]['id']) \
+                    .execute()
+            else:
+                supabase.table('user_word_status') \
+                    .insert({'user_id': user_id, 'word_id': word_id, 'review_status': 1}) \
+                    .execute()
+
+            # 2) 写入学习记录
+            record_existing = supabase.table('study_record') \
+                .select('id') \
+                .eq('user_id', user_id) \
+                .eq('word_id', word_id) \
+                .execute()
+            if record_existing.data:
+                supabase.table('study_record') \
+                    .update({'study_date': now}) \
+                    .eq('id', record_existing.data[0]['id']) \
+                    .execute()
+            else:
+                supabase.table('study_record') \
+                    .insert({'user_id': user_id, 'word_id': word_id, 'study_date': now}) \
+                    .execute()
+
+        return json_response(msg='进度已更新' if existing.data else '进度已保存')
 
     except Exception:
         logger.exception('Failed to save practice progress')
