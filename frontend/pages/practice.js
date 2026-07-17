@@ -272,6 +272,7 @@ export default function Practice() {
 
   const total = allWords.length;
   const allDone = totalMastered >= total;
+  const milestoneProgress = totalMastered % 10;
 
   // ========== 选项按钮样式 ==========
   const getOptionStyle = (idx, opt) => {
@@ -329,10 +330,10 @@ export default function Practice() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <TrophyOutlined style={{ color: '#faad14', fontSize: 18 }} />
           <Text strong style={{ fontSize: 16, color: '#4a54c9' }}>
-            {totalMastered} / {total}
+            {milestoneProgress} / 10
           </Text>
           <Progress
-            percent={total > 0 ? Math.round((totalMastered / total) * 100) : 0}
+            percent={milestoneProgress * 10}
             showInfo={false}
             size="small"
             strokeColor={{ from: '#6c7cfc', to: '#8b98ff' }}
