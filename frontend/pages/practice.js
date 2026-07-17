@@ -73,7 +73,7 @@ export default function Practice() {
 
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/api/words?page=1&size=10`);
+        const res = await fetch(`${API_BASE}/api/words?page=1&size=10`, { headers: authHeaders() });
         const json = await res.json();
         if (json.code === 200 && json.data?.list?.length) {
           const words = json.data.list;
