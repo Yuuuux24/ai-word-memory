@@ -59,7 +59,7 @@
 ### 单词闯关 `/practice`
 - 四选一答题模式，每题带音标展示
 - 答对变透明绿，答错红 + 绿高亮正确答案
-- 答对 3 次标记掌握，冷却 4~6 题后复现
+- 答对 3 次标记掌握，优先推送尚未掌握的新词
 - 进度显示 N/M，每 10 个里程碑弹窗提示
 - 答完后浮现单词卡片复盘
 
@@ -228,6 +228,7 @@ npm run dev
 ### 本项目提交记录（最新）
 
 ```
+ec758c2 docs: update README - remove screenshot placeholder, update project structure and commit log
 1a50d3a docs: add demo video
 58602f1 chore: remove vercel leftovers and update deployment description to CloudBase
 f6f7481 fix: load all words (not just 10) and prioritize unseen words in practice
@@ -236,7 +237,6 @@ f6f7481 fix: load all words (not just 10) and prioritize unseen words in practic
 cc2bd9b docs: add deployment URLs to README
 69cd640 deploy: add frontend Dockerfile for CloudBase CloudRun
 03efa23 deploy: point frontend API base to CloudBase backend
-f1c9d13 deploy: CloudBase use fixed 5000 port instead of PORT env
 ```
 
 ---
@@ -254,7 +254,12 @@ ai-word-memory/
 │   ├── requirements.txt     # Python 依赖
 │   ├── .env                 # 环境变量（需自行创建，不提交）
 │   ├── .env.example         # 环境变量模板
+│   ├── utils/               # 工具函数
+│   │   ├── auth.py          # 认证鉴权
+│   │   └── response.py      # 统一响应格式
+│   ├── wsgi.py              # WSGI 入口
 │   └── routes/              # 接口路由
+│       ├── __init__.py
 │       ├── word.py          # 单词 CRUD
 │       ├── ai_api.py        # AI 记忆素材
 │       ├── practice.py      # 单词闯关记录
@@ -267,7 +272,6 @@ ai-word-memory/
 │   │   ├── login.js         # 登录页
 │   │   ├── history.js       # 背诵历史页
 │   │   ├── practice.js      # 单词闯关页
-│   │   ├── 404.js           # 自定义 404 页面
 │   │   └── _app.js          # 全局布局包裹
 │   ├── components/
 │   │   ├── Layout.js        # 全局布局组件（导航栏 + 页面容器）
@@ -276,11 +280,14 @@ ai-word-memory/
 │   │   └── errorHandler.js  # 统一错误提示工具
 │   ├── styles/
 │   │   └── globals.css      # 全局样式
-│   ├── public/favicon/      # 网站图标
+│   ├── public/              # 静态资源（favicon、SVG 图标）
+│   ├── AGENTS.md            # CloudBase AI 配置
+│   ├── CLAUDE.md            # CloudBase AI 配置
 │   ├── package.json
-│   ├── .env.local.example   # 前端环境变量模板
-│   ├── .env.local           # 环境变量（需自行创建，不提交）
-│   └── next.config.js
+│   ├── package-lock.json
+│   ├── next.config.js
+│   ├── next.config.mjs
+│   └── .env.local.example   # 前端环境变量模板
 ├── database/
 │   └── init.sql             # 数据库初始化 SQL
 ├── delivery/                # 交付文档
