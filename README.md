@@ -228,15 +228,15 @@ npm run dev
 ### 本项目提交记录（最新）
 
 ```
-810566c feat: 新增单词闯关页面（四选一+答对3次掌握+冷却复现+里程碑提示）
-e5bf757 feat: 登录页面增加密码验证与注册切换功能
-f54c23b feat: 新增 404 自定义错误页面
-33a8cb1 fix: 修复废弃API（bodyStyle→styles）、清理未使用变量、补充缺失import
-e059de7 feat: 新增单词删除接口 + 学习记录删除功能（前端确认弹窗）
-89b4474 refactor: 抽取公共 AI 记忆素材弹窗组件 AIMemoModal
-5c3c349 perf: 修复学习记录分页性能 + DELETE 接口
-ee0b56e feat: 拓展新增单词模糊搜索、单词掌握标记功能，支持复习状态筛选
-df84c7d fix: 全流程验收修复遗留细微bug，统一全站提示文案与视觉细节
+1a50d3a docs: add demo video
+58602f1 chore: remove vercel leftovers and update deployment description to CloudBase
+f6f7481 fix: load all words (not just 10) and prioritize unseen words in practice
+8a5222e fix: practice milestone counter resets to 0/10 after each batch of 10
+0e07635 docs: move deployment URLs to top of README
+cc2bd9b docs: add deployment URLs to README
+69cd640 deploy: add frontend Dockerfile for CloudBase CloudRun
+03efa23 deploy: point frontend API base to CloudBase backend
+f1c9d13 deploy: CloudBase use fixed 5000 port instead of PORT env
 ```
 
 ---
@@ -248,6 +248,7 @@ ai-word-memory/
 ├── backend/                 # Flask 后端
 │   ├── app.py               # 应用入口，注册蓝图
 │   ├── config.py            # 配置管理
+│   ├── Dockerfile           # CloudBase 云托管容器构建文件
 │   ├── supabase_client.py   # Supabase 客户端
 │   ├── seed_kaoyan_words.py # 考研词汇批量导入脚本
 │   ├── requirements.txt     # Python 依赖
@@ -256,9 +257,11 @@ ai-word-memory/
 │   └── routes/              # 接口路由
 │       ├── word.py          # 单词 CRUD
 │       ├── ai_api.py        # AI 记忆素材
+│       ├── practice.py      # 单词闯关记录
 │       ├── user.py          # 用户登录/注册
 │       └── record.py        # 学习记录
 ├── frontend/                # Next.js 前端
+│   ├── Dockerfile           # CloudBase 云托管容器构建文件
 │   ├── pages/               # 页面
 │   │   ├── index.js         # 首页
 │   │   ├── login.js         # 登录页
@@ -280,12 +283,17 @@ ai-word-memory/
 │   └── next.config.js
 ├── database/
 │   └── init.sql             # 数据库初始化 SQL
-├── prompt-record/           # AI 开发 Prompt 截图归档（Day1~Day5）
+├── delivery/                # 交付文档
+├── prompt-record/           # AI 开发 Prompt 截图归档
+├── screenshots/             # 页面截图
+├── 演示视频/                # 演示视频
+│   └── video.mp4
 ├── API.md                   # 独立 API 接口文档
 ├── prompt_log.md            # 全部 Prompt 归档文档
 ├── task_record.md           # 每日开发任务记录
 ├── CODE_REVIEW_REPORT.md    # AI Code Review 报告
-├── SUMMARY.docx             # 个人实训总结报告（Word 文档）
+├── 个人实训总结报告.md       # 个人实训总结报告
+├── 个人实训总结报告.docx     # 个人实训总结报告（Word 文档）
 ├── .gitignore
 └── README.md
 ```
@@ -293,8 +301,6 @@ ai-word-memory/
 ---
 
 ## 截图展示
-
-> 以下区域预留截图展示位，运行项目后替换为实际截图
 
 | 页面 | 说明 |
 |------|------|
