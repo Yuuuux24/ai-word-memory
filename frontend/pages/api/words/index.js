@@ -113,7 +113,7 @@ const addWordHandler = jwtRequired(async (req, res) => {
   }
 });
 
-module.exports = (req, res) => {
+export default (req, res) => {
   if (req.method === 'GET') return getWordsHandler(req, res);
   if (req.method === 'POST') return addWordHandler(req, res);
   return jsonResponse(res, 405, 'Method Not Allowed');

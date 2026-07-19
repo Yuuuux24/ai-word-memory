@@ -61,7 +61,7 @@ const deleteWordHandler = jwtRequired(async (req, res) => {
   }
 });
 
-module.exports = (req, res) => {
+export default (req, res) => {
   if (req.method === 'GET') return getDetailHandler(req, res);
   if (req.method === 'DELETE') return deleteWordHandler(req, res);
   return jsonResponse(res, 405, 'Method Not Allowed');

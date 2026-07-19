@@ -4,7 +4,7 @@
 const { jwtRequired } = require('../../../lib/jwt');
 const { jsonResponse } = require('../../../lib/response');
 
-module.exports = jwtRequired(async (req, res) => {
+export default jwtRequired(async (req, res) => {
   return jsonResponse(res, 200, 'success', {
     user_id: req.userId,
     username: req.username,

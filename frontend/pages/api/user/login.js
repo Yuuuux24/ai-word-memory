@@ -6,7 +6,7 @@ const { createToken } = require('../../../lib/jwt');
 const { verifyPassword } = require('../../../lib/password');
 const { jsonResponse } = require('../../../lib/response');
 
-module.exports = async (req, res) => {
+export default async (req, res) => {
   if (req.method !== 'POST') {
     return jsonResponse(res, 405, 'Method Not Allowed');
   }

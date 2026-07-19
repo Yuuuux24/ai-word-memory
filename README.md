@@ -4,14 +4,13 @@
 
 | 服务 | 地址 |
 |------|------|
-| **前端页面** | [ai-word-memory-web-283624-5-1386564716.sh.run.tcloudbase.com](https://ai-word-memory-web-283624-5-1386564716.sh.run.tcloudbase.com) |
-| **后端 API** | [ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com](https://ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com) |
+| **前端页面 + API** | [http://47.76.244.242](http://47.76.244.242) |
 
-> 部署平台：腾讯云 CloudBase 云托管（容器型服务）
+> 部署平台：阿里云 ECS（Ubuntu 22.04）+ Nginx + PM2 + Node.js 22
 
 ---
 
-基于 **Next.js + Flask + Supabase** 的全栈 AI 单词记忆 Web 应用，支持单词浏览、AI 趣味记忆素材生成、用户登录及学习记录管理。
+基于 **Next.js + Supabase** 的全栈 AI 单词记忆 Web 应用，支持单词浏览、AI 趣味记忆素材生成、用户登录及学习记录管理。前后端一体，通过 Next.js API Routes 直接对接 Supabase。
 
 ---
 
@@ -19,11 +18,11 @@
 
 | 层级 | 技术 | 说明 |
 |------|------|------|
-| 前端框架 | Next.js 14 (Pages Router) | React 服务端渲染 |
+| 前端框架 | Next.js 14 (Pages Router) | React SSR + API Routes |
 | UI 组件库 | Ant Design 5 | 企业级 React UI |
-| 后端框架 | Flask (Python 3.10+) | RESTful API |
 | 数据库 | Supabase (PostgreSQL) | 云端托管数据库 |
-| AI 模块 | 模拟 AI 引擎 (可扩展) | 词根解析 + 趣味口诀 + 例句生成 |
+| AI 模块 | 混元大模型 (hunyuan-turbos-latest) | 词根解析 + 趣味口诀 + 例句生成 |
+| 鉴权 | JWT (jsonwebtoken) | 用户登录态管理 |
 
 ---
 
@@ -80,51 +79,35 @@
 2. 进入 **Project Settings > API**，复制：
    - `Project URL`
    - `anon public key`
+   - `service_role secret key`（服务端使用，注意保密）
 3. 在 **SQL Editor** 中执行 `database/init.sql` 创建数据表并导入测试数据
 
-### 2. 后端 `.env` 配置
-
-在 `backend/` 目录下创建 `.env` 文件：
-
-```env
-SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxxxxxx
-SUPABASE_SECRET_KEY=sb_secret_xxxxxxxxxxxx
-FLASK_DEBUG=1
-FLASK_HOST=0.0.0.0
-FLASK_PORT=5000
-```
-
-> **密钥获取方式**：
-> - `SUPABASE_URL` → Supabase 项目设置 → API → Project URL
-> - `SUPABASE_PUBLISHABLE_KEY` → 同上页面 publishable key
-> - `SUPABASE_SECRET_KEY` → 同上页面 secret key（需服务端使用，注意保密）
-
-### 3. 前端 `.env.local` 配置
+### 2. 前端 `.env.local` 配置
 
 在 `frontend/` 目录下创建 `.env.local` 文件：
 
 ```env
-NEXT_PUBLIC_API_BASE=http://127.0.0.1:5000
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxxxxxxxxxxx
+SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+SUPABASE_ANON_KEY=sb_secret_xxxxxxxxxxxx
+JWT_SECRET=your-jwt-secret-here
+NEXT_PUBLIC_API_BASE=
 ```
+
+> **注意**：
+> - `NEXT_PUBLIC_*` 前缀的变量会在浏览器端暴露，仅放 publishable key
+> - `SUPABASE_ANON_KEY` 实际使用 service_role key，仅供服务端 API Routes 使用
+> - `JWT_SECRET` 用于用户登录 token 签发
 
 ---
 
 ## 本地启动
 
-### 后端启动
+### 前提条件
 
-```bash
-cd backend
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 启动 Flask（端口 5000）
-python app.py
-```
-
-### 前端启动
+- **Node.js >= 22**（Supabase SDK 要求）
+- npm 10+
 
 ```bash
 cd frontend
@@ -132,11 +115,17 @@ cd frontend
 # 安装依赖
 npm install
 
+# 创建环境变量文件（见上方配置）
+cp .env.local.example .env.local
+# 编辑 .env.local 填入 Supabase 密钥
+
 # 启动 Next.js 开发服务器（端口 3000）
 npm run dev
 ```
 
 访问 **http://localhost:3000** 即可使用。
+
+> 生产部署使用 `npm run build && pm2 start npm --name "ai-word-memory" -- start`，配合 Nginx 反向代理。
 
 ---
 
@@ -228,6 +217,8 @@ npm run dev
 ### 本项目提交记录（最新）
 
 ```
+feat: add lib/jwt.js for JWT-based authentication, migrate API routes to export default
+docs: update README - ECS deployment guide, architecture refresh, project structure
 ec758c2 docs: update README - remove screenshot placeholder, update project structure and commit log
 1a50d3a docs: add demo video
 58602f1 chore: remove vercel leftovers and update deployment description to CloudBase
@@ -267,16 +258,28 @@ ai-word-memory/
 │       └── record.py        # 学习记录
 ├── frontend/                # Next.js 前端
 │   ├── Dockerfile           # CloudBase 云托管容器构建文件
-│   ├── pages/               # 页面
+│   ├── pages/               # 页面 + API 路由
 │   │   ├── index.js         # 首页
 │   │   ├── login.js         # 登录页
 │   │   ├── history.js       # 背诵历史页
 │   │   ├── practice.js      # 单词闯关页
-│   │   └── _app.js          # 全局布局包裹
+│   │   ├── _app.js          # 全局布局包裹
+│   │   └── api/             # Next.js API Routes（后端接口）
+│   │       ├── words/       # 单词 CRUD
+│   │       ├── user/        # 用户登录/注册
+│   │       ├── study/       # 学习记录
+│   │       ├── ai/          # AI 记忆素材生成
+│   │       └── practice/    # 单词闯关
+│   ├── lib/                 # 服务端工具库
+│   │   ├── supabase.js      # Supabase 客户端单例
+│   │   ├── jwt.js           # JWT 鉴权（登录/注册）
+│   │   ├── password.js      # 密码哈希（兼容 werkzeug）
+│   │   └── response.js      # 统一 JSON 响应格式
 │   ├── components/
 │   │   ├── Layout.js        # 全局布局组件（导航栏 + 页面容器）
 │   │   └── AIMemoModal.js   # AI 记忆素材弹窗公共组件
 │   ├── utils/
+│   │   ├── auth.js          # 前端鉴权（localStorage Token 管理）
 │   │   └── errorHandler.js  # 统一错误提示工具
 │   ├── styles/
 │   │   └── globals.css      # 全局样式

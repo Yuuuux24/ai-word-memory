@@ -1,7 +1,7 @@
 /**
  * GET /api — 健康检查
  */
-module.exports = (req, res) => {
+export default (req, res) => {
   res.status(200).json({
     code: 200,
     data: { status: 'ok' },

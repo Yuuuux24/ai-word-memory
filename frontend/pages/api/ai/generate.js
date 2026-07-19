@@ -66,7 +66,7 @@ async function readWordFromDB(wordId, style) {
   return memoData;
 }
 
-module.exports = optionalAuth(async (req, res) => {
+export default optionalAuth(async (req, res) => {
   if (req.method !== 'POST') {
     return jsonResponse(res, 405, 'Method Not Allowed');
   }

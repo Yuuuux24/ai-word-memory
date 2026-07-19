@@ -9,7 +9,7 @@ const { jsonResponse } = require('../../../lib/response');
 
 const REQUIRED_CORRECT = 3;
 
-module.exports = jwtRequired(async (req, res) => {
+export default jwtRequired(async (req, res) => {
   if (req.method !== 'POST') {
     return jsonResponse(res, 405, 'Method Not Allowed');
   }
