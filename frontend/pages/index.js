@@ -9,7 +9,7 @@ import { authHeaders } from '@/utils/auth';
 import AIMemoModal from '@/components/AIMemoModal';
 
 const { Title, Text } = Typography;
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
 export default function Home() {
   const [words, setWords] = useState([]);

@@ -11,7 +11,7 @@ import AIMemoModal from '@/components/AIMemoModal';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
 export default function History() {
   const router = useRouter();

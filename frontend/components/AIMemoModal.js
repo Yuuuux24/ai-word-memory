@@ -5,7 +5,7 @@ import { showError, showSuccess } from '@/utils/errorHandler';
 import { authHeaders } from '@/utils/auth';
 
 const { Text } = Typography;
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://ai-word-memory-api-283624-5-1386564716.sh.run.tcloudbase.com';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 const AI_TIMEOUT = 35000;
 const STYLE_OPTIONS = [
   { value: 'simple', label: '极简干货' },
