@@ -40,7 +40,7 @@ function parseMnemonic(raw, word, style) {
 
 async function readWordFromDB(wordId, style) {
   const supabase = getSupabase();
-  const result = await supabase.table('words')
+  const result = await supabase.from('words')
     .select('id,word,phonetic,basic_meaning,root_analysis,mnemonic,extra_example')
     .eq('id', wordId);
 

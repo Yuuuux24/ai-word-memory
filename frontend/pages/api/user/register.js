@@ -25,14 +25,14 @@ module.exports = async (req, res) => {
     const supabase = getSupabase();
 
     // 检查用户名是否已占用
-    const exists = await supabase.table('users').select('id').eq('username', username);
+    const exists = await supabase.from('users').select('id').eq('username', username);
     if (exists.data && exists.data.length > 0) {
       return jsonResponse(res, 409, '用户名已被注册');
     }
 
     // 注册新用户
     const pwdHash = hashPassword(password);
-    const insertRes = await supabase.table('users').insert({
+    const insertRes = await supabase.from('users').insert({
       username,
       password_hash: pwdHash,
     }).select();

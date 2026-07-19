@@ -10,7 +10,7 @@ const { jsonResponse } = require('../../../lib/response');
 async function userStatusMap(supabase, userId) {
   if (!userId) return {};
   try {
-    const res = await supabase.table('user_word_status')
+    const res = await supabase.from('user_word_status')
       .select('word_id,review_status')
       .eq('user_id', userId);
     const map = {};
@@ -39,7 +39,7 @@ const getWordsHandler = optionalAuth(async (req, res) => {
     if (size > 500) size = 500;
 
     const supabase = getSupabase();
-    let query = supabase.table('words').select('*', { count: 'exact' });
+    let query = supabase.from('words').select('*', { count: 'exact' });
 
     if (keyword) {
       query = query.or(`word.ilike.%${keyword}%,basic_meaning.ilike.%${keyword}%`);
@@ -89,7 +89,7 @@ const addWordHandler = jwtRequired(async (req, res) => {
     const supabase = getSupabase();
 
     // 查重
-    const existing = await supabase.table('words').select('*').eq('word', wordText);
+    const existing = await supabase.from('words').select('*').eq('word', wordText);
     if (existing.data && existing.data.length > 0) {
       return jsonResponse(res, 200, `单词"${wordText}"已存在，无需重复添加`, existing.data[0]);
     }
@@ -98,7 +98,7 @@ const addWordHandler = jwtRequired(async (req, res) => {
     if (phonetic) insertData.phonetic = phonetic;
     if (basic_meaning) insertData.basic_meaning = basic_meaning;
 
-    const result = await supabase.table('words').insert(insertData).select();
+    const result = await supabase.from('words').insert(insertData).select();
     if (result.data && result.data.length > 0) {
       return jsonResponse(res, 200, '单词添加成功', result.data[0]);
     }

@@ -16,7 +16,7 @@ module.exports = jwtRequired(async (req, res) => {
 
     const supabase = getSupabase();
 
-    const check = await supabase.table('study_record')
+    const check = await supabase.from('study_record')
       .select('id,user_id')
       .eq('id', recordId);
 
@@ -27,7 +27,7 @@ module.exports = jwtRequired(async (req, res) => {
       return jsonResponse(res, 403, '无权删除他人的学习记录');
     }
 
-    await supabase.table('study_record').delete().eq('id', recordId);
+    await supabase.from('study_record').delete().eq('id', recordId);
     return jsonResponse(res, 200, '学习记录已删除');
   } catch (e) {
     console.error('Failed to delete study record:', e);

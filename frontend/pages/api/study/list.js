@@ -8,7 +8,7 @@ const { jsonResponse } = require('../../../lib/response');
 
 async function userWordStatusMap(supabase, userId) {
   try {
-    const res = await supabase.table('user_word_status')
+    const res = await supabase.from('user_word_status')
       .select('word_id,review_status')
       .eq('user_id', userId);
     const map = {};
@@ -36,7 +36,7 @@ module.exports = jwtRequired(async (req, res) => {
     const supabase = getSupabase();
 
     // 第一步：查总数
-    let countQuery = supabase.table('study_record')
+    let countQuery = supabase.from('study_record')
       .select('*, words!inner(id,word,phonetic,basic_meaning)', { count: 'exact', head: false })
       .eq('user_id', userId);
 
@@ -49,7 +49,7 @@ module.exports = jwtRequired(async (req, res) => {
     const rawTotal = countRes.count || 0;
 
     // 第二步：拉数据
-    let dataQuery = supabase.table('study_record')
+    let dataQuery = supabase.from('study_record')
       .select('*, words!inner(id,word,phonetic,basic_meaning)')
       .eq('user_id', userId);
 

@@ -12,7 +12,7 @@ module.exports = jwtRequired(async (req, res) => {
 
   try {
     const supabase = getSupabase();
-    const query = supabase.table('practice_progress')
+    const query = supabase.from('practice_progress')
       .select('*')
       .eq('user_id', req.userId);
 

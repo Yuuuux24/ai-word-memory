@@ -24,40 +24,40 @@ module.exports = jwtRequired(async (req, res) => {
     const userId = req.userId;
 
     // 校验单词存在
-    const check = await supabase.table('words').select('id').eq('id', wordId);
+    const check = await supabase.from('words').select('id').eq('id', wordId);
     if (!check.data || check.data.length === 0) {
       return jsonResponse(res, 404, '单词不存在');
     }
 
     // 写入/更新用户状态
-    const existing = await supabase.table('user_word_status')
+    const existing = await supabase.from('user_word_status')
       .select('id')
       .eq('user_id', userId)
       .eq('word_id', wordId);
 
     if (existing.data && existing.data.length > 0) {
-      await supabase.table('user_word_status')
+      await supabase.from('user_word_status')
         .update({ review_status: reviewStatus })
         .eq('id', existing.data[0].id);
     } else {
-      await supabase.table('user_word_status')
+      await supabase.from('user_word_status')
         .insert({ user_id: userId, word_id: wordId, review_status: reviewStatus });
     }
 
     // 标记为已掌握时，同步写入学习记录
     if (reviewStatus === 1) {
       const now = new Date().toISOString();
-      const recordExist = await supabase.table('study_record')
+      const recordExist = await supabase.from('study_record')
         .select('id')
         .eq('user_id', userId)
         .eq('word_id', wordId);
 
       if (recordExist.data && recordExist.data.length > 0) {
-        await supabase.table('study_record')
+        await supabase.from('study_record')
           .update({ study_date: now })
           .eq('id', recordExist.data[0].id);
       } else {
-        await supabase.table('study_record')
+        await supabase.from('study_record')
           .insert({ user_id: userId, word_id: wordId, study_date: now });
       }
     }

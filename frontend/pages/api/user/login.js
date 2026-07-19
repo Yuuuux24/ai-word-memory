@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
     if (!password) return jsonResponse(res, 400, '密码不能为空');
 
     const supabase = getSupabase();
-    const result = await supabase.table('users').select('*').eq('username', username);
+    const result = await supabase.from('users').select('*').eq('username', username);
 
     if (!result.data || result.data.length === 0) {
       return jsonResponse(res, 401, '用户名不存在，请先注册');

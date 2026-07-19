@@ -16,7 +16,7 @@ module.exports = jwtRequired(async (req, res) => {
     const supabase = getSupabase();
     const userId = req.userId;
 
-    let query = supabase.table('practice_progress').delete().eq('user_id', userId);
+    let query = supabase.from('practice_progress').delete().eq('user_id', userId);
     if (word_ids && Array.isArray(word_ids)) {
       query = query.in('word_id', word_ids);
     }

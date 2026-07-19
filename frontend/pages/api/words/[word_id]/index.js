@@ -13,7 +13,7 @@ const getDetailHandler = optionalAuth(async (req, res) => {
     if (isNaN(wordId)) return jsonResponse(res, 400, 'word_id 必须为整数');
 
     const supabase = getSupabase();
-    const result = await supabase.table('words').select('*').eq('id', wordId);
+    const result = await supabase.from('words').select('*').eq('id', wordId);
 
     if (!result.data || result.data.length === 0) {
       return jsonResponse(res, 404, `单词 ID ${wordId} 不存在`);
@@ -23,7 +23,7 @@ const getDetailHandler = optionalAuth(async (req, res) => {
     word.review_status = 0;
 
     if (req.userId) {
-      const statusRes = await supabase.table('user_word_status')
+      const statusRes = await supabase.from('user_word_status')
         .select('review_status')
         .eq('user_id', req.userId)
         .eq('word_id', wordId);
@@ -46,14 +46,14 @@ const deleteWordHandler = jwtRequired(async (req, res) => {
     if (isNaN(wordId)) return jsonResponse(res, 400, 'word_id 必须为整数');
 
     const supabase = getSupabase();
-    const check = await supabase.table('words').select('id,word').eq('id', wordId);
+    const check = await supabase.from('words').select('id,word').eq('id', wordId);
 
     if (!check.data || check.data.length === 0) {
       return jsonResponse(res, 404, '单词不存在');
     }
 
     const wordText = check.data[0].word || '';
-    await supabase.table('words').delete().eq('id', wordId);
+    await supabase.from('words').delete().eq('id', wordId);
     return jsonResponse(res, 200, `单词"${wordText}"已删除`);
   } catch (e) {
     console.error('Failed to delete word:', e);
