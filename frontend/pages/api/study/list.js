@@ -2,9 +2,9 @@
  * GET /api/study/list — 分页查询学习记录（需 JWT 鉴权）
  * 支持 date 筛选、review_status 筛选
  */
-const { getSupabase } = require('../../../lib/supabase');
-const { jwtRequired } = require('../../../lib/jwt');
-const { jsonResponse } = require('../../../lib/response');
+import { getSupabase } from '../../../lib/supabase';
+import { jwtRequired } from '../../../lib/jwt';
+import { jsonResponse } from '../../../lib/response';
 
 async function userWordStatusMap(supabase, userId) {
   try {

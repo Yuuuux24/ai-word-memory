@@ -1,9 +1,9 @@
 /**
  * DELETE /api/study/[record_id] — 删除学习记录（需 JWT 鉴权）
  */
-const { getSupabase } = require('../../../../lib/supabase');
-const { jwtRequired } = require('../../../../lib/jwt');
-const { jsonResponse } = require('../../../../lib/response');
+import { getSupabase } from '../../../../lib/supabase';
+import { jwtRequired } from '../../../../lib/jwt';
+import { jsonResponse } from '../../../../lib/response';
 
 export default jwtRequired(async (req, res) => {
   if (req.method !== 'DELETE') {

@@ -2,9 +2,9 @@
  * GET    /api/words/[word_id] — 单词详情（可选登录）
  * DELETE /api/words/[word_id] — 删除单词（需 JWT 鉴权）
  */
-const { getSupabase } = require('../../../../lib/supabase');
-const { jwtRequired, optionalAuth } = require('../../../../lib/jwt');
-const { jsonResponse } = require('../../../../lib/response');
+import { getSupabase } from '../../../../lib/supabase';
+import { jwtRequired, optionalAuth } from '../../../../lib/jwt';
+import { jsonResponse } from '../../../../lib/response';
 
 // GET：单词详情
 const getDetailHandler = optionalAuth(async (req, res) => {

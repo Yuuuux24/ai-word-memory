@@ -2,7 +2,7 @@
  * Supabase 客户端单例
  * 使用 service_role key 获得完整的读写权限（绕过 RLS）
  */
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -20,4 +20,4 @@ function getSupabase() {
   return supabase;
 }
 
-module.exports = { getSupabase };
+export { getSupabase };

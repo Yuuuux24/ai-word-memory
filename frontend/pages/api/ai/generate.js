@@ -2,10 +2,10 @@
  * POST /api/ai/generate — 获取单词记忆素材（接口兼容，与 /memo 逻辑相同）
  * 入参：{ word_id, style? }
  */
-const { getSupabase } = require('../../../lib/supabase');
-const { optionalAuth } = require('../../../lib/jwt');
-const { jsonResponse } = require('../../../lib/response');
-const { LRUCache } = require('lru-cache');
+import { getSupabase } from '../../../lib/supabase';
+import { optionalAuth } from '../../../lib/jwt';
+import { jsonResponse } from '../../../lib/response';
+import { LRUCache } from 'lru-cache';
 
 const memoCache = new LRUCache({ max: 500, ttl: 300 * 1000 });
 

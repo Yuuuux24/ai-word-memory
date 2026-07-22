@@ -2,9 +2,9 @@
  * GET  /api/words — 分页单词列表（可选登录）
  * POST /api/words — 新增单词（需 JWT 鉴权）
  */
-const { getSupabase } = require('../../../lib/supabase');
-const { jwtRequired, optionalAuth } = require('../../../lib/jwt');
-const { jsonResponse } = require('../../../lib/response');
+import { getSupabase } from '../../../lib/supabase';
+import { jwtRequired, optionalAuth } from '../../../lib/jwt';
+import { jsonResponse } from '../../../lib/response';
 
 // 查询用户全部单词状态
 async function userStatusMap(supabase, userId) {

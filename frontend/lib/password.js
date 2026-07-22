@@ -7,7 +7,7 @@
  *
  * 新密码统一使用 pbkdf2:sha256:260000 格式，与 werkzeug 2.x 兼容。
  */
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 const PBKDF2_ITERATIONS = 260000;
 const SALT_LENGTH = 16;
@@ -59,4 +59,4 @@ function hashPassword(password) {
   return `pbkdf2:sha256:${PBKDF2_ITERATIONS}$${salt}$${derived.toString('hex')}`;
 }
 
-module.exports = { verifyPassword, hashPassword };
+export { verifyPassword, hashPassword };

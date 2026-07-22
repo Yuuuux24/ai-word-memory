@@ -1,7 +1,7 @@
 /**
  * JWT 工具 - 服务端鉴权
  */
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 
@@ -43,4 +43,4 @@ function jwtRequired(handler) {
   };
 }
 
-module.exports = { createToken, optionalAuth, jwtRequired };
+export { createToken, optionalAuth, jwtRequired };

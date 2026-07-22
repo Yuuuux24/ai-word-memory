@@ -2,10 +2,10 @@
  * POST /api/ai/memo — 获取单词记忆素材（从数据库读取预生成内容，纯本地，零 API 费用）
  * 入参：{ word_id, style? }
  */
-const { getSupabase } = require('../../../lib/supabase');
-const { optionalAuth } = require('../../../lib/jwt');
-const { jsonResponse } = require('../../../lib/response');
-const { LRUCache } = require('lru-cache');
+import { getSupabase } from '../../../lib/supabase';
+import { optionalAuth } from '../../../lib/jwt';
+import { jsonResponse } from '../../../lib/response';
+import { LRUCache } from 'lru-cache';
 
 // 内存缓存：相同 word_id + style，5 分钟 TTL
 const memoCache = new LRUCache({ max: 500, ttl: 300 * 1000 });

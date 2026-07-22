@@ -1,10 +1,10 @@
 /**
  * POST /api/user/register — 用户注册
  */
-const { getSupabase } = require('../../../lib/supabase');
-const { createToken } = require('../../../lib/jwt');
-const { hashPassword } = require('../../../lib/password');
-const { jsonResponse } = require('../../../lib/response');
+import { getSupabase } from '../../../lib/supabase';
+import { createToken } from '../../../lib/jwt';
+import { hashPassword } from '../../../lib/password';
+import { jsonResponse } from '../../../lib/response';
 
 export default async (req, res) => {
   if (req.method !== 'POST') {

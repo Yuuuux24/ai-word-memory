@@ -3,9 +3,9 @@
  * 入参：{ word_id, correct_count, cooldown_remaining }
  * 答对 3 次自动标记已掌握
  */
-const { getSupabase } = require('../../../lib/supabase');
-const { jwtRequired } = require('../../../lib/jwt');
-const { jsonResponse } = require('../../../lib/response');
+import { getSupabase } from '../../../lib/supabase';
+import { jwtRequired } from '../../../lib/jwt';
+import { jsonResponse } from '../../../lib/response';
 
 const REQUIRED_CORRECT = 3;
 

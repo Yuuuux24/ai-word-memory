@@ -2,9 +2,9 @@
  * PUT /api/words/[word_id]/status — 更新用户单词复习状态（需 JWT 鉴权）
  * 入参：{ review_status: 0 或 1 }
  */
-const { getSupabase } = require('../../../../lib/supabase');
-const { jwtRequired } = require('../../../../lib/jwt');
-const { jsonResponse } = require('../../../../lib/response');
+import { getSupabase } from '../../../../lib/supabase';
+import { jwtRequired } from '../../../../lib/jwt';
+import { jsonResponse } from '../../../../lib/response';
 
 export default jwtRequired(async (req, res) => {
   if (req.method !== 'PUT') {

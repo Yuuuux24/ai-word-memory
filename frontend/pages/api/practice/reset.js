@@ -2,9 +2,9 @@
  * POST /api/practice/reset — 重置闯关进度（需 JWT 鉴权）
  * 入参：{ word_ids?: [1,2,3] }  不传则清空全部
  */
-const { getSupabase } = require('../../../lib/supabase');
-const { jwtRequired } = require('../../../lib/jwt');
-const { jsonResponse } = require('../../../lib/response');
+import { getSupabase } from '../../../lib/supabase';
+import { jwtRequired } from '../../../lib/jwt';
+import { jsonResponse } from '../../../lib/response';
 
 export default jwtRequired(async (req, res) => {
   if (req.method !== 'POST') {
